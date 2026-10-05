@@ -10,12 +10,17 @@ import {
 } from '../api/receivables';
 import type { Account } from '../api/accounts';
 import { formatRupiah, formatNumberIDR, parseRupiahToCents, formatCurrencyInput } from '../utils/currency';
+import { usePrivacy } from '../context/PrivacyContext';
+import { PrivacyToggle } from './PrivacyToggle';
 
 interface ReceivablesManagerProps {
   accounts: Account[];
 }
 
 export const ReceivablesManager: React.FC<ReceivablesManagerProps> = ({ accounts }) => {
+  const { formatAmount, maskValue } = usePrivacy();
+  const fmtIDR = (amount: number): string => (formatAmount ? formatAmount(amount) : formatRupiah(amount));
+  const mask = (val: string): string => (maskValue ? maskValue(val) : val);
   const [receivables, setReceivables] = useState<Receivable[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -201,7 +206,10 @@ export const ReceivablesManager: React.FC<ReceivablesManagerProps> = ({ accounts
     <div className="receivables-manager-container" data-testid="receivables-manager">
       <div className="receivables-header">
         <div>
-          <h2>🤝 Receivables & Loans</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <h2>🤝 Receivables & Loans</h2>
+            <PrivacyToggle variant="icon" id="receivables-privacy-toggle" />
+          </div>
           <p className="section-description">
             Track money lent to friends, family, or counterparties. Lending converts cash into a receivable asset without reducing wealth.
           </p>
@@ -223,17 +231,17 @@ export const ReceivablesManager: React.FC<ReceivablesManagerProps> = ({ accounts
       <div className="receivables-kpi-grid">
         <div className="kpi-card">
           <span className="kpi-label">Active Outstanding</span>
-          <span className="kpi-value text-accent">{formatRupiah(activeRemaining)}</span>
+          <span className="kpi-value text-accent">{fmtIDR(activeRemaining)}</span>
           <span className="kpi-subtext">Collectible assets</span>
         </div>
         <div className="kpi-card">
           <span className="kpi-label">Total Repaid</span>
-          <span className="kpi-value text-success">{formatRupiah(totalPaid)}</span>
+          <span className="kpi-value text-success">{fmtIDR(totalPaid)}</span>
           <span className="kpi-subtext">Collected back into accounts</span>
         </div>
         <div className="kpi-card">
           <span className="kpi-label">Total Lent (Filtered)</span>
-          <span className="kpi-value">{formatRupiah(totalPrincipal)}</span>
+          <span className="kpi-value">{fmtIDR(totalPrincipal)}</span>
           <span className="kpi-subtext">{receivables.length} total loans</span>
         </div>
       </div>
@@ -371,12 +379,12 @@ export const ReceivablesManager: React.FC<ReceivablesManagerProps> = ({ accounts
                   <div className="receivable-amounts">
                     <div className="amount-col">
                       <span className="amount-label">Principal</span>
-                      <span className="amount-value">{rec.formatted_principal || formatRupiah(rec.principal)}</span>
+                      <span className="amount-value">{mask(rec.formatted_principal || formatRupiah(rec.principal))}</span>
                     </div>
                     <div className="amount-col">
                       <span className="amount-label">Remaining</span>
                       <span className={`amount-value ${rec.remaining_amount > 0 ? 'text-accent' : 'text-muted'}`}>
-                        {rec.formatted_remaining_amount || formatRupiah(rec.remaining_amount)}
+                        {mask(rec.formatted_remaining_amount || formatRupiah(rec.remaining_amount))}
                       </span>
                     </div>
                   </div>
@@ -431,7 +439,7 @@ export const ReceivablesManager: React.FC<ReceivablesManagerProps> = ({ accounts
                     aria-valuemin={0}
                     aria-valuemax={100}
                   />
-                  <span className="progress-text">{pctPaid}% repaid ({rec.formatted_total_paid || formatRupiah(rec.total_paid)})</span>
+                  <span className="progress-text">{pctPaid}% repaid ({mask(rec.formatted_total_paid || formatRupiah(rec.total_paid))})</span>
                 </div>
 
                 {/* Expanded Payment History */}
@@ -452,7 +460,7 @@ export const ReceivablesManager: React.FC<ReceivablesManagerProps> = ({ accounts
                           {rec.payments.map((p) => (
                             <tr key={p.id}>
                               <td>{p.payment_date}</td>
-                              <td className="text-success">+{p.formatted_amount || formatRupiah(p.amount)}</td>
+                              <td className="text-success">+{mask(p.formatted_amount || formatRupiah(p.amount))}</td>
                               <td>{p.target_account_name || 'Account'}</td>
                               <td>{p.notes || '-'}</td>
                             </tr>

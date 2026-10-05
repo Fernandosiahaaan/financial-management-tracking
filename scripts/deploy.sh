@@ -2,7 +2,30 @@
 set -euo pipefail
 
 # FinTrack Deployment Script
-echo "==> Deploying FinTrack Personal Finance Management System..."
+ENV_TARGET="${1:-prod}"
+
+if [ "$ENV_TARGET" = "dev" ] || [ "$ENV_TARGET" = "development" ]; then
+    ENV_FILE=".env.development"
+    echo "==> Deploying FinTrack in DEVELOPMENT mode (using $ENV_FILE)..."
+else
+    ENV_FILE=".env.production"
+    echo "==> Deploying FinTrack in PRODUCTION mode (using $ENV_FILE)..."
+fi
+
+if [ ! -f "$ENV_FILE" ]; then
+    echo "Error: Configuration file $ENV_FILE not found!"
+    exit 1
+fi
+
+if grep -q "\[DEV-PROJECT-REF\]" "$ENV_FILE"; then
+    echo "⚠️  PERINGATAN: File $ENV_FILE masih berisi placeholder [DEV-PROJECT-REF]!"
+    echo "Silakan isi DATABASE_URL dengan connection string Supabase Dev Anda di file $ENV_FILE terlebih dahulu."
+    exit 1
+fi
+
+# Synchronize to .env so docker compose and local apps use it consistently
+cp "$ENV_FILE" .env
+cp "$ENV_FILE" backend/.env
 
 # 1. Check docker & docker compose
 if ! command -v docker &> /dev/null; then
@@ -10,11 +33,11 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-# 2. Build and restart containers
+# 2. Build and restart containers using targeted env file
 echo "==> Building and launching containers via Docker Compose..."
-docker compose down --remove-orphans || true
-docker compose build --pull
-docker compose up -d
+docker compose --env-file "$ENV_FILE" down --remove-orphans || true
+docker compose --env-file "$ENV_FILE" build --pull
+docker compose --env-file "$ENV_FILE" up -d
 
 # 3. Wait for services to become healthy
 echo "==> Waiting for backend and database health checks..."

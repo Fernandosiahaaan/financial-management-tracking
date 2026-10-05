@@ -10,12 +10,16 @@ import {
 } from '../api/investments';
 import type { Account } from '../api/accounts';
 import { formatRupiah, formatNumberIDR, parseRupiahToCents, formatCurrencyInput } from '../utils/currency';
+import { usePrivacy } from '../context/PrivacyContext';
+import { PrivacyToggle } from './PrivacyToggle';
 
 interface InvestmentsManagerProps {
   accounts: Account[];
 }
 
 export const InvestmentsManager: React.FC<InvestmentsManagerProps> = ({ accounts }) => {
+  const { maskValue } = usePrivacy();
+  const mask = (val: string): string => (maskValue ? maskValue(val) : val);
   const [portfolio, setPortfolio] = useState<PortfolioSummary>({
     total_capital: 0,
     total_current_value: 0,
@@ -177,7 +181,10 @@ export const InvestmentsManager: React.FC<InvestmentsManagerProps> = ({ accounts
     <div className="investments-manager-container" data-testid="investments-manager">
       <div className="investments-header">
         <div>
-          <h2>📈 Investment Portfolio</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <h2>📈 Investment Portfolio</h2>
+            <PrivacyToggle variant="icon" id="investments-privacy-toggle" />
+          </div>
           <p className="section-description">
             Track investments across stocks, mutual funds, gold, and crypto. Market performance affects total wealth without being treated as operational income.
           </p>
@@ -199,12 +206,12 @@ export const InvestmentsManager: React.FC<InvestmentsManagerProps> = ({ accounts
       <div className="investments-kpi-grid">
         <div className="kpi-card">
           <span className="kpi-label">Total Current Valuation</span>
-          <span className="kpi-value text-accent">{portfolio.formatted_total_current_value || formatRupiah(portfolio.total_current_value)}</span>
+          <span className="kpi-value text-accent">{mask(portfolio.formatted_total_current_value || formatRupiah(portfolio.total_current_value))}</span>
           <span className="kpi-subtext">Current market value</span>
         </div>
         <div className="kpi-card">
           <span className="kpi-label">Invested Capital</span>
-          <span className="kpi-value">{portfolio.formatted_total_capital || formatRupiah(portfolio.total_capital)}</span>
+          <span className="kpi-value">{mask(portfolio.formatted_total_capital || formatRupiah(portfolio.total_capital))}</span>
           <span className="kpi-subtext">Total cost basis</span>
         </div>
         <div className="kpi-card">
@@ -219,7 +226,7 @@ export const InvestmentsManager: React.FC<InvestmentsManagerProps> = ({ accounts
                   : ''
               }`}
             >
-              {portfolio.formatted_total_gain_loss || formatRupiah(portfolio.total_gain_loss)}
+              {mask(portfolio.formatted_total_gain_loss || formatRupiah(portfolio.total_gain_loss))}
             </span>
             <span
               className={`gain-chip ${
@@ -376,18 +383,18 @@ export const InvestmentsManager: React.FC<InvestmentsManagerProps> = ({ accounts
                 <div className="investment-metrics">
                   <div className="metric-box">
                     <span className="metric-label">Capital</span>
-                    <span className="metric-value">{inv.formatted_capital || formatRupiah(inv.capital)}</span>
+                    <span className="metric-value">{mask(inv.formatted_capital || formatRupiah(inv.capital))}</span>
                   </div>
 
                   <div className="metric-box">
                     <span className="metric-label">Current Value</span>
-                    <span className="metric-value font-bold">{inv.formatted_current_value || formatRupiah(inv.current_value)}</span>
+                    <span className="metric-value font-bold">{mask(inv.formatted_current_value || formatRupiah(inv.current_value))}</span>
                   </div>
 
                   <div className="metric-box">
                     <span className="metric-label">Gain / Loss</span>
                     <span className={`metric-value ${isGain ? 'text-success' : 'text-danger'}`}>
-                      {inv.formatted_unrealized_gain || formatRupiah(inv.unrealized_gain)}
+                      {mask(inv.formatted_unrealized_gain || formatRupiah(inv.unrealized_gain))}
                     </span>
                     <span className={`gain-chip-sm ${isGain ? 'gain-positive' : 'gain-negative'}`}>
                       {isGain ? '▲' : '▼'} {inv.unrealized_gain_percentage.toFixed(2)}%

@@ -11,13 +11,12 @@ import {
 } from '../api/allocations';
 import { listCategories, type Category } from '../api/categories';
 import { formatRupiah, formatNumberIDR, parseRupiahToCents, formatCurrencyInput } from '../utils/currency';
-
-/** Format IDR amount */
-function fmtIDR(amount: number): string {
-  return formatRupiah(amount);
-}
+import { usePrivacy } from '../context/PrivacyContext';
+import { PrivacyToggle } from './PrivacyToggle';
 
 export const AllocationManager: React.FC = () => {
+  const { formatAmount } = usePrivacy();
+  const fmtIDR = (amount: number): string => (formatAmount ? formatAmount(amount) : formatRupiah(amount));
   const [cycleSummary, setCycleSummary] = useState<CycleSummary | null>(null);
   const [summaryData, setSummaryData] = useState<AllocationSummary | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -180,7 +179,10 @@ export const AllocationManager: React.FC = () => {
     <section className="manager-card" id="allocation-manager">
       <div className="manager-card__header">
         <div>
-          <h2 className="manager-card__title">🎯 Income Allocation</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <h2 className="manager-card__title">🎯 Income Allocation</h2>
+            <PrivacyToggle variant="icon" id="allocation-privacy-toggle" />
+          </div>
           <p className="manager-card__subtitle">
             Distribute earned cycle income across designated purposes. Total allocations cannot exceed total income.
           </p>

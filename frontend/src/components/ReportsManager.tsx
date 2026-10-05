@@ -5,8 +5,11 @@ import {
   type ReportData,
 } from '../api/reports';
 import { formatRupiah } from '../utils/currency';
+import { usePrivacy } from '../context/PrivacyContext';
+import { PrivacyToggle } from './PrivacyToggle';
 
 export const ReportsManager: React.FC = () => {
+  const { formatAmount } = usePrivacy();
   const [reportType, setReportType] = useState<'monthly' | 'cycle'>('monthly');
 
   // Month selector defaults to current month (YYYY-MM)
@@ -60,7 +63,7 @@ export const ReportsManager: React.FC = () => {
   };
 
   const formatCurrency = (val: number): string => {
-    return formatRupiah(val);
+    return formatAmount ? formatAmount(val) : formatRupiah(val);
   };
 
   return (
@@ -68,7 +71,10 @@ export const ReportsManager: React.FC = () => {
       {/* Top Header & Type Switcher */}
       <div className="manager-header">
         <div>
-          <h2 className="manager-title">📑 Reports & Asset Snapshots</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <h2 className="manager-title">📑 Reports & Asset Snapshots</h2>
+            <PrivacyToggle variant="icon" id="reports-privacy-toggle" />
+          </div>
           <p className="manager-subtitle">
             Comprehensive financial statements and consolidated asset valuations
           </p>
