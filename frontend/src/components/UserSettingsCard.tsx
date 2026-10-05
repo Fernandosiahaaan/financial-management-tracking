@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { PinSettingsCard } from './PinSettingsCard';
 
 export const UserSettingsCard: React.FC = () => {
   const { user, updateCycleStartDay } = useAuth();
@@ -32,7 +33,8 @@ export const UserSettingsCard: React.FC = () => {
   };
 
   return (
-    <div className="settings-card" id="user-settings-card">
+    <>
+      <div className="settings-card" id="user-settings-card">
       <div className="settings-card__header">
         <h3 className="settings-card__title">⚙️ Financial Cycle Settings</h3>
         <p className="settings-card__subtitle">
@@ -82,5 +84,7 @@ export const UserSettingsCard: React.FC = () => {
         </div>
       </form>
     </div>
+    <PinSettingsCard />
+    </>
   );
 };

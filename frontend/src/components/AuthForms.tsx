@@ -1,13 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { PinLoginForm } from './PinLoginForm';
+import { isPinConfigured } from '../utils/pinAuth';
 
 export const AuthForms: React.FC = () => {
   const { login, register, error, clearError, isLoading } = useAuth();
   const [isRegister, setIsRegister] = useState(false);
+  const [usePinMode, setUsePinMode] = useState(false);
+  const [hasPinOnDevice, setHasPinOnDevice] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [cycleStartDay, setCycleStartDay] = useState(1);
   const [clientError, setClientError] = useState('');
+
+  useEffect(() => {
+    setHasPinOnDevice(isPinConfigured());
+  }, []);
 
   const validate = (): boolean => {
     if (!email || !email.includes('@')) {
@@ -50,8 +58,24 @@ export const AuthForms: React.FC = () => {
 
   const displayedError = clientError || error;
 
+  if (usePinMode && hasPinOnDevice) {
+    return <PinLoginForm onSwitchToPassword={() => setUsePinMode(false)} />;
+  }
+
   return (
     <div className="auth-card" id="auth-card">
+      {hasPinOnDevice && !isRegister && (
+        <button
+          type="button"
+          className="btn btn--outline btn--full pin-quick-login-toggle"
+          id="auth-use-pin-btn"
+          onClick={() => setUsePinMode(true)}
+          style={{ marginBottom: 'var(--space-4)' }}
+        >
+          🔒 Masuk dengan Quick PIN
+        </button>
+      )}
+
       <div className="auth-card__header">
         <h2 className="auth-card__title">
           {isRegister ? 'Create your account' : 'Welcome back'}

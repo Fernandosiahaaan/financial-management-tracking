@@ -3401,10 +3401,172 @@
   .card-header .btn {
     width: 100%;
   }
+}
 
-  .btn {
-    font-size: var(--font-size-xs);
-  }
+/* ── Quick PIN Login Styles ────────────────────────────────────── */
+
+.pin-auth-card {
+  outline: none;
+  max-width: 380px;
+  margin: 0 auto;
+}
+
+.pin-avatar-badge {
+  font-size: 32px;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-2);
+}
+
+.pin-user-highlight {
+  color: var(--color-brand-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.pin-dots-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  margin: var(--space-6) 0 var(--space-5);
+}
+
+.pin-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-border);
+  background: transparent;
+  transition: all var(--transition-fast);
+}
+
+.pin-dot--filled {
+  background: var(--color-brand-primary);
+  border-color: var(--color-brand-primary);
+  transform: scale(1.15);
+  box-shadow: 0 0 8px rgba(79, 70, 229, 0.4);
+}
+
+.pin-dot--error {
+  border-color: var(--color-error);
+  background: var(--color-error-bg);
+  animation: shake 0.3s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+
+.pin-keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  max-width: 280px;
+  margin: 0 auto var(--space-5);
+}
+
+.pin-key {
+  height: 58px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pin-key:hover:not(:disabled) {
+  background: var(--color-bg-card);
+  border-color: var(--color-brand-primary);
+  transform: translateY(-1px);
+}
+
+.pin-key:active:not(:disabled) {
+  transform: scale(0.94);
+  background: var(--color-border);
+}
+
+.pin-key--action {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  background: transparent;
+}
+
+.pin-footer-actions {
+  text-align: center;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.pin-switch-btn {
+  font-size: var(--font-size-xs);
+  color: var(--color-brand-primary);
+  cursor: pointer;
+}
+
+/* PIN Settings Card */
+.pin-settings-status-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-3);
+}
+
+.pin-status-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.pin-status-label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.pin-status-user {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.pin-status-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pin-quick-login-toggle {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(129, 140, 248, 0.12) 100%);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: var(--color-brand-primary);
+  font-weight: var(--font-weight-semibold);
+  transition: all var(--transition-fast);
+}
+
+.pin-quick-login-toggle:hover {
+  background: var(--color-brand-primary);
+  color: #ffffff;
 }
 
 

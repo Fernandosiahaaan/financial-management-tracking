@@ -8,6 +8,7 @@ interface AuthContextType {
   isLoading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
+  loginWithToken: (token: string) => Promise<void>;
   register: (email: string, password: string, cycleStartDay?: number) => Promise<void>;
   logout: () => Promise<void>;
   updateCycleStartDay: (day: number) => Promise<void>;
@@ -51,6 +52,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(res.profile);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';
+      setError(message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loginWithToken = async (token: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      authApi.setToken(token);
+      const profile = await authApi.getMe();
+      setUser(profile);
+    } catch (err) {
+      authApi.clearToken();
+      const message = err instanceof Error ? err.message : 'Sesi PIN telah berakhir, silakan login dengan password';
       setError(message);
       throw err;
     } finally {
@@ -107,6 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         error,
         login,
+        loginWithToken,
         register,
         logout,
         updateCycleStartDay,
