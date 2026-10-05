@@ -1,0 +1,404 @@
+openapi: 3.0.3
+info:
+  title: FinTrack API
+  description: >
+    Production REST API for FinTrack Personal Financial Management and Asset Tracking.
+    Implements cash flow tracking, dynamic budgeting, income allocation, customizable
+    financial cycles, receivables (loans), investments, and periodic reporting.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local Docker Compose Environment
+paths:
+  /health:
+    get:
+      summary: System Health Check
+      description: Returns service connectivity status and database health.
+      responses:
+        '200':
+          description: System healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  status: { type: string, example: "healthy" }
+                  database: { type: string, example: "connected" }
+
+  /auth/register:
+    post:
+      summary: User Registration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email, example: "user@example.com" }
+                password: { type: string, minLength: 8, example: "SecurePass123!" }
+                cycle_start_day: { type: integer, minimum: 1, maximum: 31, default: 1 }
+      responses:
+        '201':
+          description: User created
+        '400':
+          description: Validation error
+        '409':
+          description: Email already registered
+
+  /auth/login:
+    post:
+      summary: User Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200':
+          description: Authentication successful, returns JWT token
+        '401':
+          description: Invalid credentials
+
+  /auth/me:
+    get:
+      summary: Current User Profile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Profile details
+
+  /auth/settings:
+    put:
+      summary: Update User Cycle Settings
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cycle_start_day]
+              properties:
+                cycle_start_day: { type: integer, minimum: 1, maximum: 31 }
+      responses:
+        '200':
+          description: Settings updated
+
+  /accounts:
+    get:
+      summary: List Accounts
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User accounts list
+    post:
+      summary: Create Account
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, type]
+              properties:
+                name: { type: string }
+                type: { type: string, enum: [BANK, EWALLET, CASH, OTHER] }
+                opening_balance: { type: integer, minimum: 0 }
+      responses:
+        '201':
+          description: Account created
+
+  /categories:
+    get:
+      summary: List Categories
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User categories
+    post:
+      summary: Create Category
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, type]
+              properties:
+                name: { type: string }
+                type: { type: string, enum: [INCOME, EXPENSE] }
+                icon: { type: string }
+                color: { type: string }
+      responses:
+        '201':
+          description: Category created
+
+  /transactions:
+    get:
+      summary: Query Transactions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: start_date
+          in: query
+          schema: { type: string, format: date }
+        - name: end_date
+          in: query
+          schema: { type: string, format: date }
+        - name: type
+          in: query
+          schema: { type: string, enum: [INCOME, EXPENSE, TRANSFER] }
+      responses:
+        '200':
+          description: Filtered transactions
+    post:
+      summary: Record Transaction
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [account_id, type, amount, transaction_date]
+              properties:
+                account_id: { type: string, format: uuid }
+                category_id: { type: string, format: uuid }
+                target_account_id: { type: string, format: uuid }
+                type: { type: string, enum: [INCOME, EXPENSE, TRANSFER] }
+                amount: { type: integer, minimum: 1 }
+                transaction_date: { type: string, format: date }
+                description: { type: string }
+      responses:
+        '201':
+          description: Transaction recorded
+
+  /cycle/current:
+    get:
+      summary: Get Current Cycle Window
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Active cycle boundaries
+
+  /cycle/summary:
+    get:
+      summary: Get Cycle Cash Flow Summary
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: date
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Cycle operational metrics
+
+  /budgets:
+    get:
+      summary: List Budgets
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: cycle_start
+          in: query
+          schema: { type: string, format: date }
+        - name: cycle_end
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Budget limits with actual spend and variance
+    post:
+      summary: Create Category Budget
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [category_id, cycle_start, cycle_end, planned_amount]
+              properties:
+                category_id: { type: string, format: uuid }
+                cycle_start: { type: string, format: date }
+                cycle_end: { type: string, format: date }
+                planned_amount: { type: integer, minimum: 0 }
+      responses:
+        '201':
+          description: Budget limit created
+
+  /allocations:
+    get:
+      summary: List Allocations
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Income allocations for cycle
+    post:
+      summary: Create Income Allocation
+      security:
+        - BearerAuth: []
+      responses:
+        '201':
+          description: Allocation created
+        '422':
+          description: Allocations exceed total cycle income
+
+  /dashboard:
+    get:
+      summary: Get Consolidated Dashboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: date
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: High-clarity financial dashboard metrics
+
+  /receivables:
+    get:
+      summary: List Receivables
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Receivables with balance and status
+    post:
+      summary: Create Loan/Receivable
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [counterparty, principal]
+              properties:
+                counterparty: { type: string }
+                principal: { type: integer, minimum: 1 }
+                source_account_id: { type: string, format: uuid }
+                due_date: { type: string, format: date }
+                notes: { type: string }
+      responses:
+        '201':
+          description: Receivable created
+
+  /receivables/{id}/payments:
+    post:
+      summary: Record Loan Repayment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, target_account_id, payment_date]
+              properties:
+                amount: { type: integer, minimum: 1 }
+                target_account_id: { type: string, format: uuid }
+                payment_date: { type: string, format: date }
+                notes: { type: string }
+      responses:
+        '201':
+          description: Repayment recorded
+
+  /investments:
+    get:
+      summary: List Investments
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Portfolio holdings with capital and valuation
+    post:
+      summary: Add Investment Holding
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, type, capital]
+              properties:
+                name: { type: string }
+                type: { type: string, enum: [STOCK, MUTUAL_FUND, GOLD, CRYPTO, OTHER] }
+                capital: { type: integer, minimum: 0 }
+                current_value: { type: integer, minimum: 0 }
+                source_account_id: { type: string, format: uuid }
+                notes: { type: string }
+      responses:
+        '201':
+          description: Holding created
+
+  /reports/monthly:
+    get:
+      summary: Generate Monthly Financial Statement
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: year
+          in: query
+          schema: { type: integer, minimum: 2000, maximum: 2100 }
+        - name: month
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 12 }
+      responses:
+        '200':
+          description: Consolidated monthly report
+        '400':
+          description: Invalid year or month
+
+  /reports/cycle:
+    get:
+      summary: Generate Cycle Financial Statement
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: date
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Consolidated cycle report
+        '400':
+          description: Invalid date format
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

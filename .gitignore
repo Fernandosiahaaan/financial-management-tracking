@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Go
+backend/tmp/
+
+# Docker
+docker-compose.override.yml
+
+# Database backups
+backups/
+*.sql.gz
+
+/docs/phases
+/docs/project_rules.md
+/docs/template.md
+/docs/project_state.md
+
+
