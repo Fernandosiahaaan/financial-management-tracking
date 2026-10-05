@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { fetchHealth, type HealthResponse } from '../api/client';
 import { UserSettingsCard } from './UserSettingsCard';
@@ -27,13 +27,36 @@ type ActiveNavTab =
   | 'categories'
   | 'settings';
 
+const NAV_TABS = [
+  { id: 'overview' as const, label: 'Dashboard', icon: '📊' },
+  { id: 'reports' as const, label: 'Reports', icon: '📑' },
+  { id: 'transactions' as const, label: 'Transactions', icon: '💸' },
+  { id: 'budgets' as const, label: 'Budgets', icon: '📊' },
+  { id: 'allocations' as const, label: 'Allocations', icon: '🎯' },
+  { id: 'receivables' as const, label: 'Receivables', icon: '🤝' },
+  { id: 'investments' as const, label: 'Investments', icon: '📈' },
+  { id: 'accounts' as const, label: 'Accounts', icon: '🏛️' },
+  { id: 'categories' as const, label: 'Categories', icon: '🏷️' },
+  { id: 'settings' as const, label: 'Settings', icon: '⚙️' },
+];
+
 export const DashboardView: React.FC = () => {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<ActiveNavTab>('overview');
+  const [showMobileMenu, setShowMobileMenu] = useState<boolean>(false);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [healthLoading, setHealthLoading] = useState<boolean>(true);
   const [healthError, setHealthError] = useState<string>('');
+  const tabLinksRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll active tab into view smoothly
+  useEffect(() => {
+    const activeEl = document.getElementById(`nav-tab-${activeTab}`);
+    if (activeEl && typeof activeEl.scrollIntoView === 'function') {
+      activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  }, [activeTab]);
 
   const loadHealth = async () => {
     setHealthLoading(true);
@@ -66,104 +89,90 @@ export const DashboardView: React.FC = () => {
     <div className="dashboard" id="dashboard-view">
       {/* Top Navigation Bar */}
       <nav className="dashboard-nav">
-        <div className="dashboard-brand">
-          <span className="brand-logo">💰</span>
-          <span className="brand-name">FinTrack</span>
-        </div>
-
-        <div className="nav-tab-links">
-          <button
-            className={`nav-tab-btn ${activeTab === 'overview' ? 'nav-tab-btn--active' : ''}`}
-            onClick={() => setActiveTab('overview')}
-            id="nav-tab-overview"
-          >
-            📊 Dashboard
-          </button>
-          <button
-            className={`nav-tab-btn ${activeTab === 'reports' ? 'nav-tab-btn--active' : ''}`}
-            onClick={() => setActiveTab('reports')}
-            id="nav-tab-reports"
-          >
-            📑 Reports
-          </button>
-          <button
-            className={`nav-tab-btn ${activeTab === 'transactions' ? 'nav-tab-btn--active' : ''}`}
-            onClick={() => setActiveTab('transactions')}
-            id="nav-tab-transactions"
-          >
-            💸 Transactions
-          </button>
-          <button
-            className={`nav-tab-btn ${activeTab === 'budgets' ? 'nav-tab-btn--active' : ''}`}
-            onClick={() => setActiveTab('budgets')}
-            id="nav-tab-budgets"
-          >
-            📊 Budgets
-          </button>
-          <button
-            className={`nav-tab-btn ${activeTab === 'allocations' ? 'nav-tab-btn--active' : ''}`}
-            onClick={() => setActiveTab('allocations')}
-            id="nav-tab-allocations"
-          >
-            🎯 Allocations
-          </button>
-          <button
-            className={`nav-tab-btn ${activeTab === 'receivables' ? 'nav-tab-btn--active' : ''}`}
-            onClick={() => {
-              setActiveTab('receivables');
-              loadAccounts();
-            }}
-            id="nav-tab-receivables"
-          >
-            🤝 Receivables
-          </button>
-          <button
-            className={`nav-tab-btn ${activeTab === 'investments' ? 'nav-tab-btn--active' : ''}`}
-            onClick={() => {
-              setActiveTab('investments');
-              loadAccounts();
-            }}
-            id="nav-tab-investments"
-          >
-            📈 Investments
-          </button>
-          <button
-            className={`nav-tab-btn ${activeTab === 'accounts' ? 'nav-tab-btn--active' : ''}`}
-            onClick={() => setActiveTab('accounts')}
-            id="nav-tab-accounts"
-          >
-            🏛️ Accounts
-          </button>
-          <button
-            className={`nav-tab-btn ${activeTab === 'categories' ? 'nav-tab-btn--active' : ''}`}
-            onClick={() => setActiveTab('categories')}
-            id="nav-tab-categories"
-          >
-            🏷️ Categories
-          </button>
-          <button
-            className={`nav-tab-btn ${activeTab === 'settings' ? 'nav-tab-btn--active' : ''}`}
-            onClick={() => setActiveTab('settings')}
-            id="nav-tab-settings"
-          >
-            ⚙️ Settings
-          </button>
-        </div>
-
-        <div className="dashboard-user-actions">
-          <PrivacyToggle />
-          <div className="user-pill" id="user-info-pill">
-            <span className="user-avatar">👤</span>
-            <span className="user-email">{user?.email}</span>
+        <div className="dashboard-nav-top">
+          <div className="dashboard-brand">
+            <span className="brand-logo">💰</span>
+            <span className="brand-name">FinTrack</span>
           </div>
+
+          <div className="dashboard-user-actions">
+            <PrivacyToggle />
+            <div className="user-pill" id="user-info-pill" title={user?.email}>
+              <span className="user-avatar">👤</span>
+              <span className="user-email">{user?.email}</span>
+            </div>
+            <button
+              className="btn btn--outline btn--sm dashboard-logout-btn"
+              id="dashboard-logout-btn"
+              onClick={logout}
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+
+        {/* Feature Tabs Bar */}
+        <div className="nav-tab-wrapper">
+          <div className="nav-tab-links" ref={tabLinksRef} id="nav-tab-links">
+            {NAV_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                className={`nav-tab-btn ${activeTab === tab.id ? 'nav-tab-btn--active' : ''}`}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  if (tab.id === 'receivables' || tab.id === 'investments') {
+                    loadAccounts();
+                  }
+                }}
+                id={`nav-tab-${tab.id}`}
+              >
+                <span>{tab.icon}</span>
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Quick-Access Mobile All Features Button */}
           <button
-            className="btn btn--outline btn--sm"
-            id="dashboard-logout-btn"
-            onClick={logout}
+            className={`nav-mobile-menu-btn ${showMobileMenu ? 'nav-mobile-menu-btn--active' : ''}`}
+            id="nav-mobile-menu-toggle"
+            onClick={() => setShowMobileMenu((prev) => !prev)}
+            aria-label="Tampilkan Semua Fitur"
           >
-            Sign Out
+            <span>{showMobileMenu ? '✕' : '🗂️'}</span>
+            <span className="nav-mobile-menu-text">Semua Fitur</span>
+            <span className="nav-mobile-menu-count">{NAV_TABS.length}</span>
           </button>
         </div>
+
+        {/* Mobile All Features Dropdown/Sheet */}
+        {showMobileMenu && (
+          <div className="mobile-features-drawer">
+            <div className="mobile-features-drawer__header">
+              <span className="mobile-features-drawer__title">🗂️ Navigasi Semua Fitur</span>
+              <span className="mobile-features-drawer__sub">Pilih menu untuk langsung berpindah</span>
+            </div>
+            <div className="mobile-features-grid">
+              {NAV_TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  className={`mobile-feature-card ${activeTab === tab.id ? 'mobile-feature-card--active' : ''}`}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    if (tab.id === 'receivables' || tab.id === 'investments') {
+                      loadAccounts();
+                    }
+                    setShowMobileMenu(false);
+                  }}
+                >
+                  <span className="mobile-feature-card__icon">{tab.icon}</span>
+                  <span className="mobile-feature-card__label">{tab.label}</span>
+                  {activeTab === tab.id && <span className="mobile-feature-card__badge">Aktif</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Main Content Pane */}
