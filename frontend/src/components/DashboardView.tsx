@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { fetchHealth, type HealthResponse } from '../api/client';
 import { UserSettingsCard } from './UserSettingsCard';
@@ -43,20 +43,23 @@ const NAV_TABS = [
 export const DashboardView: React.FC = () => {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<ActiveNavTab>('overview');
-  const [showMobileMenu, setShowMobileMenu] = useState<boolean>(false);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [healthLoading, setHealthLoading] = useState<boolean>(true);
   const [healthError, setHealthError] = useState<string>('');
-  const tabLinksRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll active tab into view smoothly
+  // Lock body scrolling on mobile when sidebar drawer is open
   useEffect(() => {
-    const activeEl = document.getElementById(`nav-tab-${activeTab}`);
-    if (activeEl && typeof activeEl.scrollIntoView === 'function') {
-      activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    if (sidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
     }
-  }, [activeTab]);
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [sidebarOpen]);
 
   const loadHealth = async () => {
     setHealthLoading(true);
@@ -85,104 +88,144 @@ export const DashboardView: React.FC = () => {
     loadAccounts();
   }, []);
 
+  const handleSelectTab = (tabId: ActiveNavTab) => {
+    setActiveTab(tabId);
+    setSidebarOpen(false);
+    if (tabId === 'receivables' || tabId === 'investments') {
+      loadAccounts();
+    }
+  };
+
   return (
     <div className="dashboard" id="dashboard-view">
-      {/* Top Navigation Bar */}
-      <nav className="dashboard-nav">
-        <div className="dashboard-nav-top">
-          <div className="dashboard-brand" onClick={() => setActiveTab('overview')} style={{ cursor: 'pointer' }}>
+      {/* Mobile Top Bar (Clean & Safe from Notches) */}
+      <header className="mobile-header" id="mobile-top-header">
+        <button
+          type="button"
+          className="mobile-hamburger-btn"
+          id="mobile-sidebar-toggle"
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Buka Menu Navigasi"
+        >
+          <span className="hamburger-icon">☰</span>
+        </button>
+
+        <div
+          className="mobile-header-brand"
+          onClick={() => handleSelectTab('overview')}
+          style={{ cursor: 'pointer' }}
+        >
+          <img src="/icon-192.png" alt="FinTrack Logo" className="brand-logo-img" />
+          <span className="brand-name">FinTrack</span>
+        </div>
+
+        <div className="mobile-header-actions">
+          <PrivacyToggle />
+        </div>
+      </header>
+
+      {/* Mobile Drawer Backdrop */}
+      {sidebarOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Responsive Sidebar (Desktop Permanent / Mobile Slide-Over Drawer) */}
+      <aside
+        className={`dashboard-sidebar ${sidebarOpen ? 'dashboard-sidebar--open' : ''}`}
+        id="dashboard-sidebar"
+      >
+        {/* Sidebar Header */}
+        <div className="sidebar-header">
+          <div
+            className="dashboard-brand"
+            onClick={() => handleSelectTab('overview')}
+            style={{ cursor: 'pointer' }}
+          >
             <span className="brand-logo">
               <img src="/icon-192.png" alt="FinTrack Logo" className="brand-logo-img" />
             </span>
-            <span className="brand-name">FinTrack</span>
+            <div className="brand-info">
+              <span className="brand-name">FinTrack</span>
+              <span className="brand-tag">Finance Hub</span>
+            </div>
           </div>
 
-          <div className="dashboard-user-actions">
-            <PrivacyToggle />
-            <button
-              type="button"
-              className="user-pill"
-              id="user-info-pill"
-              title="Klik untuk cek Profile & atur PIN"
-              onClick={() => setActiveTab('settings')}
-              style={{ cursor: 'pointer', background: activeTab === 'settings' ? 'var(--color-primary-light, rgba(16, 185, 129, 0.15))' : undefined }}
-            >
-              <span className="user-avatar">👤</span>
-              <span className="user-email">{user?.email}</span>
-            </button>
-            <button
-              className="btn btn--outline btn--sm dashboard-logout-btn"
-              id="dashboard-logout-btn"
-              onClick={logout}
-            >
-              Sign Out
-            </button>
-          </div>
-        </div>
-
-        {/* Feature Tabs Bar */}
-        <div className="nav-tab-wrapper">
-          <div className="nav-tab-links" ref={tabLinksRef} id="nav-tab-links">
-            {NAV_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                className={`nav-tab-btn ${activeTab === tab.id ? 'nav-tab-btn--active' : ''}`}
-                onClick={() => {
-                  setActiveTab(tab.id);
-                  if (tab.id === 'receivables' || tab.id === 'investments') {
-                    loadAccounts();
-                  }
-                }}
-                id={`nav-tab-${tab.id}`}
-              >
-                <span>{tab.icon}</span>
-                <span>{tab.label}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Quick-Access Mobile All Features Button */}
           <button
-            className={`nav-mobile-menu-btn ${showMobileMenu ? 'nav-mobile-menu-btn--active' : ''}`}
-            id="nav-mobile-menu-toggle"
-            onClick={() => setShowMobileMenu((prev) => !prev)}
-            aria-label="Tampilkan Semua Fitur"
+            type="button"
+            className="sidebar-close-btn"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Tutup Menu"
           >
-            <span>{showMobileMenu ? '✕' : '🗂️'}</span>
-            <span className="nav-mobile-menu-text">Semua Fitur</span>
-            <span className="nav-mobile-menu-count">{NAV_TABS.length}</span>
+            ✕
           </button>
         </div>
 
-        {/* Mobile All Features Dropdown/Sheet */}
-        {showMobileMenu && (
-          <div className="mobile-features-drawer">
-            <div className="mobile-features-drawer__header">
-              <span className="mobile-features-drawer__title">🗂️ Navigasi Semua Fitur</span>
-              <span className="mobile-features-drawer__sub">Pilih menu untuk langsung berpindah</span>
-            </div>
-            <div className="mobile-features-grid">
-              {NAV_TABS.map((tab) => (
-                <button
-                  key={tab.id}
-                  className={`mobile-feature-card ${activeTab === tab.id ? 'mobile-feature-card--active' : ''}`}
-                  onClick={() => {
-                    setActiveTab(tab.id);
-                    if (tab.id === 'receivables' || tab.id === 'investments') {
-                      loadAccounts();
-                    }
-                    setShowMobileMenu(false);
-                  }}
-                >
-                  <span className="mobile-feature-card__icon">{tab.icon}</span>
-                  <span className="mobile-feature-card__label">{tab.label}</span>
-                  {activeTab === tab.id && <span className="mobile-feature-card__badge">Aktif</span>}
-                </button>
-              ))}
-            </div>
+        {/* Sidebar Navigation Menu */}
+        <nav className="sidebar-nav">
+          <div className="sidebar-nav-title">MENU UTAMA</div>
+          <div className="sidebar-nav-links" id="nav-tab-links">
+            {NAV_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                className={`sidebar-nav-item ${activeTab === tab.id ? 'sidebar-nav-item--active' : ''}`}
+                onClick={() => handleSelectTab(tab.id)}
+                id={`nav-tab-${tab.id}`}
+              >
+                <span className="sidebar-nav-icon">{tab.icon}</span>
+                <span className="sidebar-nav-label">{tab.label}</span>
+                {activeTab === tab.id && <span className="sidebar-active-indicator" />}
+              </button>
+            ))}
           </div>
-        )}
-      </nav>
+        </nav>
+
+        {/* Sidebar Footer with Profile & Sign Out (Comfortable & Easily Reached on Mobile) */}
+        <div className="sidebar-footer">
+          <div className="sidebar-privacy-row">
+            <span className="sidebar-privacy-label">Mode Privasi</span>
+            <PrivacyToggle />
+          </div>
+
+          {/* User Profile Card */}
+          <button
+            type="button"
+            className={`sidebar-user-card ${activeTab === 'settings' ? 'sidebar-user-card--active' : ''}`}
+            id="user-info-pill"
+            title="Klik untuk cek Profil & Atur PIN"
+            onClick={() => handleSelectTab('settings')}
+          >
+            <div className="sidebar-user-avatar">👤</div>
+            <div className="sidebar-user-meta">
+              <span className="sidebar-user-email">{user?.email}</span>
+              <span className="sidebar-user-badge">
+                {user?.has_pin ? '🟢 PIN Aktif' : '⚪ Atur PIN Akun'}
+              </span>
+            </div>
+            <span className="sidebar-user-action-arrow">⚙️</span>
+          </button>
+
+          {/* Large, Accessible Sign Out Button */}
+          <button
+            type="button"
+            className="btn btn--outline dashboard-logout-btn sidebar-logout-btn"
+            id="dashboard-logout-btn"
+            onClick={() => {
+              setSidebarOpen(false);
+              logout();
+            }}
+          >
+            <span className="logout-icon">🚪</span>
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <div className="dashboard-main-area">
 
       {/* Main Content Pane */}
       <main className="dashboard-content">
@@ -281,6 +324,8 @@ export const DashboardView: React.FC = () => {
         {activeTab === 'categories' && <CategoriesManager />}
         {activeTab === 'settings' && <UserSettingsCard />}
       </main>
+      </div>
     </div>
   );
 };
+
