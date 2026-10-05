@@ -6,6 +6,37 @@
 const PIN_HASH_KEY = 'fintrack_pin_hash';
 const PIN_EMAIL_KEY = 'fintrack_pin_email';
 const PIN_TOKEN_KEY = 'fintrack_pin_token';
+const REMEMBERED_EMAIL_KEY = 'fintrack_remembered_email';
+
+export function getRememberedEmail(): string {
+  try {
+    return (
+      localStorage.getItem(REMEMBERED_EMAIL_KEY) ||
+      localStorage.getItem(PIN_EMAIL_KEY) ||
+      ''
+    );
+  } catch {
+    return '';
+  }
+}
+
+export function setRememberedEmail(email: string): void {
+  try {
+    localStorage.setItem(REMEMBERED_EMAIL_KEY, email);
+    localStorage.setItem(PIN_EMAIL_KEY, email);
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+export function clearRememberedEmail(): void {
+  try {
+    localStorage.removeItem(REMEMBERED_EMAIL_KEY);
+    localStorage.removeItem(PIN_EMAIL_KEY);
+  } catch {
+    // Ignore storage errors
+  }
+}
 
 /**
  * Hashes a 6-digit PIN using SHA-256 with salt
@@ -32,14 +63,11 @@ export async function hashPin(pin: string): Promise<string> {
 }
 
 /**
- * Checks if a Quick PIN has been configured on this device
+ * Checks if a Quick PIN or remembered session has been configured on this device
  */
 export function isPinConfigured(): boolean {
   try {
-    return Boolean(
-      localStorage.getItem(PIN_HASH_KEY) &&
-      localStorage.getItem(PIN_TOKEN_KEY)
-    );
+    return Boolean(getRememberedEmail());
   } catch {
     return false;
   }
@@ -49,11 +77,7 @@ export function isPinConfigured(): boolean {
  * Returns the email of the user associated with the configured PIN
  */
 export function getPinUserEmail(): string {
-  try {
-    return localStorage.getItem(PIN_EMAIL_KEY) || '';
-  } catch {
-    return '';
-  }
+  return getRememberedEmail();
 }
 
 /**

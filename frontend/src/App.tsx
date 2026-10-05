@@ -24,7 +24,9 @@ const MainContent: React.FC = () => {
   return (
     <div className="app" id="app-unauthenticated">
       <header className="app-header">
-        <div className="app-logo">💰</div>
+        <div className="app-logo">
+          <img src="/icon-192.png" alt="FinTrack Logo" className="app-logo-img" />
+        </div>
         <h1 className="app-title">FinTrack</h1>
         <p className="app-subtitle">Personal Finance Management System</p>
       </header>

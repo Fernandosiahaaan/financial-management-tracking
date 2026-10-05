@@ -1,25 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import * as authApi from '../api/auth';
-import {
-  isPinConfigured,
-  setupPin,
-  removePin,
-  getPinUserEmail,
-} from '../utils/pinAuth';
+import { setRememberedEmail, clearRememberedEmail } from '../utils/pinAuth';
 
 export const PinSettingsCard: React.FC = () => {
-  const { user } = useAuth();
-  const [hasPin, setHasPin] = useState<boolean>(false);
+  const { user, refreshProfile } = useAuth();
   const [showSetupModal, setShowSetupModal] = useState<boolean>(false);
   const [pinInput, setPinInput] = useState<string>('');
   const [confirmPinInput, setConfirmPinInput] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
+  const [isSaving, setIsSaving] = useState<boolean>(false);
 
-  useEffect(() => {
-    setHasPin(isPinConfigured());
-  }, []);
+  const hasPin = Boolean(user?.has_pin);
 
   const handleOpenSetup = () => {
     setPinInput('');
@@ -42,29 +35,37 @@ export const PinSettingsCard: React.FC = () => {
       return;
     }
 
-    const token = authApi.getToken();
-    if (!token || !user?.email) {
-      setError('Gagal membaca sesi autentikasi. Silakan refresh halaman.');
-      return;
-    }
-
+    setIsSaving(true);
     try {
-      await setupPin(pinInput, user.email, token);
-      setHasPin(true);
+      await authApi.setPin(pinInput);
+      if (user?.email) {
+        setRememberedEmail(user.email);
+      }
+      await refreshProfile();
       setShowSetupModal(false);
-      setSuccess('Quick PIN 6-digit berhasil diaktifkan di perangkat ini!');
-      setTimeout(() => setSuccess(''), 4000);
+      setSuccess('PIN 6-digit berhasil disimpan ke database akun Anda! Anda sekarang dapat login menggunakan PIN di perangkat mana pun.');
+      setTimeout(() => setSuccess(''), 5000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gagal menyimpan PIN');
+      setError(err instanceof Error ? err.message : 'Gagal menyimpan PIN ke server');
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleRemovePin = () => {
-    if (window.confirm('Apakah Anda yakin ingin menonaktifkan Quick PIN di perangkat ini?')) {
-      removePin();
-      setHasPin(false);
-      setSuccess('Quick PIN telah dinonaktifkan.');
-      setTimeout(() => setSuccess(''), 3000);
+  const handleRemovePin = async () => {
+    if (window.confirm('Apakah Anda yakin ingin menonaktifkan PIN untuk akun Anda?')) {
+      setIsSaving(true);
+      try {
+        await authApi.removePin();
+        clearRememberedEmail();
+        await refreshProfile();
+        setSuccess('PIN telah berhasil dinonaktifkan dari database akun Anda.');
+        setTimeout(() => setSuccess(''), 4000);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Gagal menonaktifkan PIN');
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -86,13 +87,13 @@ export const PinSettingsCard: React.FC = () => {
 
       <div className="pin-settings-status-box">
         <div className="pin-status-info">
-          <span className="pin-status-label">Status Quick PIN di Perangkat Ini:</span>
+          <span className="pin-status-label">Status PIN Akun:</span>
           <span className={`badge ${hasPin ? 'badge--success' : 'badge--neutral'}`}>
-            {hasPin ? '🟢 Aktif' : '⚪ Belum Diatur'}
+            {hasPin ? '🟢 Aktif di Database' : '⚪ Belum Diatur'}
           </span>
           {hasPin && (
             <span className="pin-status-user">
-              Terkait dengan: <strong>{getPinUserEmail()}</strong>
+              Tersimpan untuk akun: <strong>{user?.email}</strong>
             </span>
           )}
         </div>
@@ -105,6 +106,7 @@ export const PinSettingsCard: React.FC = () => {
                 className="btn btn--outline btn--sm"
                 onClick={handleOpenSetup}
                 id="pin-change-btn"
+                disabled={isSaving}
               >
                 Ubah PIN
               </button>
@@ -113,8 +115,9 @@ export const PinSettingsCard: React.FC = () => {
                 className="btn btn-danger-outline btn--sm"
                 onClick={handleRemovePin}
                 id="pin-remove-btn"
+                disabled={isSaving}
               >
-                Hapus PIN
+                {isSaving ? 'Menghapus…' : 'Hapus PIN'}
               </button>
             </>
           ) : (
@@ -123,8 +126,9 @@ export const PinSettingsCard: React.FC = () => {
               className="btn btn--primary btn--sm"
               onClick={handleOpenSetup}
               id="pin-setup-btn"
+              disabled={isSaving}
             >
-              🔒 Aktifkan Quick PIN
+              🔒 Aktifkan PIN
             </button>
           )}
         </div>
@@ -132,11 +136,11 @@ export const PinSettingsCard: React.FC = () => {
 
       {/* Setup PIN Modal */}
       {showSetupModal && (
-        <div className="modal-overlay" onClick={() => setShowSetupModal(false)}>
+        <div className="modal-overlay" onClick={() => !isSaving && setShowSetupModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
             <div className="modal-header">
-              <h3>{hasPin ? 'Ubah Quick PIN' : 'Atur Quick PIN Baru'}</h3>
-              <button className="btn-close" onClick={() => setShowSetupModal(false)}>✕</button>
+              <h3>{hasPin ? 'Ubah PIN Akun' : 'Atur PIN Akun Baru'}</h3>
+              <button className="btn-close" onClick={() => !isSaving && setShowSetupModal(false)}>✕</button>
             </div>
 
             {error && (
@@ -158,6 +162,7 @@ export const PinSettingsCard: React.FC = () => {
                   value={pinInput}
                   onChange={(e) => setPinInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   autoFocus
+                  disabled={isSaving}
                   required
                 />
               </div>
@@ -173,6 +178,7 @@ export const PinSettingsCard: React.FC = () => {
                   placeholder="Ketik ulang 6 digit PIN"
                   value={confirmPinInput}
                   onChange={(e) => setConfirmPinInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  disabled={isSaving}
                   required
                 />
               </div>
@@ -182,15 +188,16 @@ export const PinSettingsCard: React.FC = () => {
                   type="button"
                   className="btn btn--outline"
                   onClick={() => setShowSetupModal(false)}
+                  disabled={isSaving}
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   className="btn btn--primary"
-                  disabled={pinInput.length !== 6 || confirmPinInput.length !== 6}
+                  disabled={isSaving || pinInput.length !== 6 || confirmPinInput.length !== 6}
                 >
-                  Simpan PIN
+                  {isSaving ? 'Menyimpan…' : 'Simpan PIN'}
                 </button>
               </div>
             </form>

@@ -9,9 +9,11 @@ interface AuthContextType {
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
   loginWithToken: (token: string) => Promise<void>;
+  loginWithPin: (email: string, pin: string) => Promise<void>;
   register: (email: string, password: string, cycleStartDay?: number) => Promise<void>;
   logout: () => Promise<void>;
   updateCycleStartDay: (day: number) => Promise<void>;
+  refreshProfile: () => Promise<void>;
   clearError: () => void;
 }
 
@@ -52,6 +54,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(res.profile);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';
+      setError(message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loginWithPin = async (email: string, pin: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await authApi.pinLogin(email, pin);
+      setUser(res.profile);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'PIN login failed';
       setError(message);
       throw err;
     } finally {
@@ -115,6 +132,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const refreshProfile = async () => {
+    try {
+      const profile = await authApi.getMe();
+      setUser(profile);
+    } catch {
+      // ignore
+    }
+  };
+
   const clearError = () => setError(null);
 
   return (
@@ -126,9 +152,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         error,
         login,
         loginWithToken,
+        loginWithPin,
         register,
         logout,
         updateCycleStartDay,
+        refreshProfile,
         clearError,
       }}
     >

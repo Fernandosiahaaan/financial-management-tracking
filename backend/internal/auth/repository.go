@@ -26,6 +26,7 @@ type Repository interface {
 	GetUserSettings(ctx context.Context, userID uuid.UUID) (*UserSettings, error)
 	UpdateUserSettings(ctx context.Context, userID uuid.UUID, cycleStartDay int) (*UserSettings, error)
 	GetUserProfile(ctx context.Context, userID uuid.UUID) (*UserProfile, error)
+	SetPinHash(ctx context.Context, userID uuid.UUID, pinHash *string) error
 }
 
 // PostgresRepository implements Repository using pgxpool.
@@ -88,7 +89,7 @@ func (r *PostgresRepository) CreateUser(ctx context.Context, user User, defaultC
 func (r *PostgresRepository) GetUserByEmail(ctx context.Context, email string) (*User, error) {
 	cleanEmail := strings.ToLower(strings.TrimSpace(email))
 	query := `
-		SELECT id, email, password_hash, created_at, updated_at
+		SELECT id, email, password_hash, pin_hash, created_at, updated_at
 		FROM users
 		WHERE LOWER(email) = $1;
 	`
@@ -98,6 +99,7 @@ func (r *PostgresRepository) GetUserByEmail(ctx context.Context, email string) (
 		&u.ID,
 		&u.Email,
 		&u.PasswordHash,
+		&u.PinHash,
 		&u.CreatedAt,
 		&u.UpdatedAt,
 	)
@@ -114,7 +116,7 @@ func (r *PostgresRepository) GetUserByEmail(ctx context.Context, email string) (
 // GetUserByID queries a user by primary key UUID.
 func (r *PostgresRepository) GetUserByID(ctx context.Context, id uuid.UUID) (*User, error) {
 	query := `
-		SELECT id, email, password_hash, created_at, updated_at
+		SELECT id, email, password_hash, pin_hash, created_at, updated_at
 		FROM users
 		WHERE id = $1;
 	`
@@ -124,6 +126,7 @@ func (r *PostgresRepository) GetUserByID(ctx context.Context, id uuid.UUID) (*Us
 		&u.ID,
 		&u.Email,
 		&u.PasswordHash,
+		&u.PinHash,
 		&u.CreatedAt,
 		&u.UpdatedAt,
 	)
@@ -192,7 +195,7 @@ func (r *PostgresRepository) UpdateUserSettings(ctx context.Context, userID uuid
 // GetUserProfile combines user identity and cycle settings.
 func (r *PostgresRepository) GetUserProfile(ctx context.Context, userID uuid.UUID) (*UserProfile, error) {
 	query := `
-		SELECT u.id, u.email, COALESCE(s.cycle_start_day, 1), u.created_at
+		SELECT u.id, u.email, COALESCE(s.cycle_start_day, 1), u.created_at, (u.pin_hash IS NOT NULL AND u.pin_hash != '') AS has_pin
 		FROM users u
 		LEFT JOIN user_settings s ON u.id = s.user_id
 		WHERE u.id = $1;
@@ -204,6 +207,7 @@ func (r *PostgresRepository) GetUserProfile(ctx context.Context, userID uuid.UUI
 		&p.Email,
 		&p.CycleStartDay,
 		&p.CreatedAt,
+		&p.HasPin,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -214,3 +218,23 @@ func (r *PostgresRepository) GetUserProfile(ctx context.Context, userID uuid.UUI
 
 	return &p, nil
 }
+
+// SetPinHash updates or clears the pin_hash for a user.
+func (r *PostgresRepository) SetPinHash(ctx context.Context, userID uuid.UUID, pinHash *string) error {
+	query := `
+		UPDATE users
+		SET pin_hash = $2, updated_at = $3
+		WHERE id = $1;
+	`
+
+	cmdTag, err := r.pool.Exec(ctx, query, userID, pinHash, time.Now())
+	if err != nil {
+		return fmt.Errorf("set pin hash: %w", err)
+	}
+	if cmdTag.RowsAffected() == 0 {
+		return ErrUserNotFound
+	}
+
+	return nil
+}
+

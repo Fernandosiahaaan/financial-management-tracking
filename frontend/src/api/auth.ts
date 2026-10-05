@@ -5,6 +5,7 @@ export interface UserProfile {
   email: string;
   cycle_start_day: number;
   created_at: string;
+  has_pin?: boolean;
 }
 
 export interface AuthResponseData {
@@ -81,6 +82,54 @@ export async function login(email: string, password: string): Promise<AuthRespon
   return data;
 }
 
+export async function pinLogin(email: string, pin: string): Promise<AuthResponseData> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/auth/pin/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, pin }),
+  });
+
+  const data = await handleResponse<AuthResponseData>(res);
+  if (data.token) {
+    setToken(data.token);
+  }
+  return data;
+}
+
+export async function setPin(pin: string): Promise<void> {
+  const token = getToken();
+  if (!token) {
+    throw new Error('No authentication token found');
+  }
+
+  const res = await fetch(`${API_BASE_URL}/api/v1/auth/pin`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ pin }),
+  });
+
+  await handleResponse<void>(res);
+}
+
+export async function removePin(): Promise<void> {
+  const token = getToken();
+  if (!token) {
+    throw new Error('No authentication token found');
+  }
+
+  const res = await fetch(`${API_BASE_URL}/api/v1/auth/pin`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  await handleResponse<void>(res);
+}
+
 export async function logout(): Promise<void> {
   try {
     await fetch(`${API_BASE_URL}/api/v1/auth/logout`, { method: 'POST' });
@@ -121,3 +170,4 @@ export async function updateUserSettings(cycleStartDay: number): Promise<{ cycle
 
   return handleResponse<{ cycle_start_day: number }>(res);
 }
+

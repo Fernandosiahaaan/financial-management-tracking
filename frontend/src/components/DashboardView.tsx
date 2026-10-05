@@ -37,7 +37,7 @@ const NAV_TABS = [
   { id: 'investments' as const, label: 'Investments', icon: '📈' },
   { id: 'accounts' as const, label: 'Accounts', icon: '🏛️' },
   { id: 'categories' as const, label: 'Categories', icon: '🏷️' },
-  { id: 'settings' as const, label: 'Settings', icon: '⚙️' },
+  { id: 'settings' as const, label: 'Profile & Settings', icon: '⚙️' },
 ];
 
 export const DashboardView: React.FC = () => {
@@ -90,17 +90,26 @@ export const DashboardView: React.FC = () => {
       {/* Top Navigation Bar */}
       <nav className="dashboard-nav">
         <div className="dashboard-nav-top">
-          <div className="dashboard-brand">
-            <span className="brand-logo">💰</span>
+          <div className="dashboard-brand" onClick={() => setActiveTab('overview')} style={{ cursor: 'pointer' }}>
+            <span className="brand-logo">
+              <img src="/icon-192.png" alt="FinTrack Logo" className="brand-logo-img" />
+            </span>
             <span className="brand-name">FinTrack</span>
           </div>
 
           <div className="dashboard-user-actions">
             <PrivacyToggle />
-            <div className="user-pill" id="user-info-pill" title={user?.email}>
+            <button
+              type="button"
+              className="user-pill"
+              id="user-info-pill"
+              title="Klik untuk cek Profile & atur PIN"
+              onClick={() => setActiveTab('settings')}
+              style={{ cursor: 'pointer', background: activeTab === 'settings' ? 'var(--color-primary-light, rgba(16, 185, 129, 0.15))' : undefined }}
+            >
               <span className="user-avatar">👤</span>
               <span className="user-email">{user?.email}</span>
-            </div>
+            </button>
             <button
               className="btn btn--outline btn--sm dashboard-logout-btn"
               id="dashboard-logout-btn"

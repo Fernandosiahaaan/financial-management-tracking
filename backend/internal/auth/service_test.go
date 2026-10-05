@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -97,7 +98,19 @@ func (m *mockRepo) GetUserProfile(ctx context.Context, userID uuid.UUID) (*UserP
 		Email:         u.Email,
 		CycleStartDay: cycleDay,
 		CreatedAt:     u.CreatedAt,
+		HasPin:        u.PinHash != nil && *u.PinHash != "",
 	}, nil
+}
+
+func (m *mockRepo) SetPinHash(ctx context.Context, userID uuid.UUID, pinHash *string) error {
+	u, ok := m.usersByID[userID]
+	if !ok {
+		return ErrUserNotFound
+	}
+	u.PinHash = pinHash
+	m.usersByID[userID] = u
+	m.users[u.Email] = u
+	return nil
 }
 
 func setupTestService() (*DefaultService, *mockRepo) {
@@ -213,3 +226,83 @@ func TestService_UpdateSettings(t *testing.T) {
 		t.Fatalf("expected ErrInvalidCycleDay, got %v", err)
 	}
 }
+
+func TestService_PinAuth(t *testing.T) {
+	svc, _ := setupTestService()
+	reg, err := svc.Register(context.Background(), "pinuser@example.com", "Password123!", 1)
+	if err != nil {
+		t.Fatalf("unexpected register error: %v", err)
+	}
+
+	// 1. PIN login before PIN is set should fail with ErrPinNotConfigured
+	_, err = svc.PinLogin(context.Background(), "pinuser@example.com", "123456")
+	if !errors.Is(err, ErrPinNotConfigured) {
+		t.Fatalf("expected ErrPinNotConfigured, got %v", err)
+	}
+
+	// 2. Setting invalid PIN should fail
+	err = svc.SetPin(context.Background(), reg.Profile.ID, "12345") // 5 digits
+	if !errors.Is(err, ErrInvalidPIN) {
+		t.Fatalf("expected ErrInvalidPIN for 5 digits, got %v", err)
+	}
+
+	err = svc.SetPin(context.Background(), reg.Profile.ID, "12345a") // non-digit
+	if !errors.Is(err, ErrInvalidPIN) {
+		t.Fatalf("expected ErrInvalidPIN for non-digits, got %v", err)
+	}
+
+	// 3. Setting valid PIN
+	err = svc.SetPin(context.Background(), reg.Profile.ID, "123456")
+	if err != nil {
+		t.Fatalf("failed to set PIN: %v", err)
+	}
+
+	// 4. Verify profile shows HasPin = true
+	prof, err := svc.GetProfile(context.Background(), reg.Profile.ID)
+	if err != nil {
+		t.Fatalf("failed to get profile: %v", err)
+	}
+	if !prof.HasPin {
+		t.Fatalf("expected HasPin to be true")
+	}
+
+	// 5. Login with wrong PIN should fail
+	_, err = svc.PinLogin(context.Background(), "pinuser@example.com", "654321")
+	if !errors.Is(err, ErrInvalidPinCredentials) {
+		t.Fatalf("expected ErrInvalidPinCredentials for wrong PIN, got %v", err)
+	}
+
+	// 6. Login with correct PIN should succeed and return token
+	authRes, err := svc.PinLogin(context.Background(), "pinuser@example.com", "123456")
+	if err != nil {
+		t.Fatalf("unexpected error on pin login: %v", err)
+	}
+	if authRes.Token == "" {
+		t.Fatalf("expected valid token from pin login")
+	}
+	if authRes.Profile.Email != "pinuser@example.com" {
+		t.Errorf("expected email pinuser@example.com, got %s", authRes.Profile.Email)
+	}
+
+	// 7. Remove PIN
+	err = svc.RemovePin(context.Background(), reg.Profile.ID)
+	if err != nil {
+		t.Fatalf("failed to remove PIN: %v", err)
+	}
+
+	// 8. Profile should have HasPin = false
+	prof, err = svc.GetProfile(context.Background(), reg.Profile.ID)
+	if err != nil {
+		t.Fatalf("failed to get profile: %v", err)
+	}
+	if prof.HasPin {
+		t.Fatalf("expected HasPin to be false after removal")
+	}
+
+	// 9. Login with PIN after removal should fail with ErrPinNotConfigured
+	_, err = svc.PinLogin(context.Background(), "pinuser@example.com", "123456")
+	if !errors.Is(err, ErrPinNotConfigured) {
+		t.Fatalf("expected ErrPinNotConfigured after removal, got %v", err)
+	}
+}
+

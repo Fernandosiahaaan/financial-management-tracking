@@ -19,6 +19,15 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
+type PinLoginRequest struct {
+	Email string `json:"email"`
+	Pin   string `json:"pin"`
+}
+
+type SetPinRequest struct {
+	Pin string `json:"pin"`
+}
+
 type UpdateSettingsRequest struct {
 	CycleStartDay int `json:"cycle_start_day"`
 }
@@ -44,6 +53,7 @@ func (h *Handler) Routes() chi.Router {
 	// Public routes
 	r.Post("/register", h.Register)
 	r.Post("/login", h.Login)
+	r.Post("/pin/login", h.PinLogin)
 	r.Post("/logout", h.Logout)
 
 	// Protected routes
@@ -51,6 +61,8 @@ func (h *Handler) Routes() chi.Router {
 		pr.Use(RequireAuth(h.tokens))
 		pr.Get("/me", h.GetMe)
 		pr.Put("/settings", h.UpdateSettings)
+		pr.Post("/pin", h.SetPin)
+		pr.Delete("/pin", h.RemovePin)
 	})
 
 	return r
@@ -206,8 +218,107 @@ func (h *Handler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *Handler) PinLogin(w http.ResponseWriter, r *http.Request) {
+	var req PinLoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondJSON(w, http.StatusBadRequest, map[string]interface{}{
+			"success": false,
+			"message": "invalid request body",
+		})
+		return
+	}
+
+	res, err := h.service.PinLogin(r.Context(), req.Email, req.Pin)
+	if err != nil {
+		if errors.Is(err, ErrPinNotConfigured) {
+			respondJSON(w, http.StatusUnauthorized, map[string]interface{}{
+				"success": false,
+				"message": "PIN belum diatur untuk akun ini",
+			})
+			return
+		}
+		if errors.Is(err, ErrInvalidPinCredentials) {
+			respondJSON(w, http.StatusUnauthorized, map[string]interface{}{
+				"success": false,
+				"message": "email atau PIN salah",
+			})
+			return
+		}
+
+		respondJSON(w, http.StatusInternalServerError, map[string]interface{}{
+			"success": false,
+			"message": "failed to authenticate with PIN",
+		})
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"data":    res,
+	})
+}
+
+func (h *Handler) SetPin(w http.ResponseWriter, r *http.Request) {
+	userID, ok := GetUserID(r.Context())
+	if !ok {
+		respondUnauthorized(w, "unauthorized")
+		return
+	}
+
+	var req SetPinRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondJSON(w, http.StatusBadRequest, map[string]interface{}{
+			"success": false,
+			"message": "invalid request body",
+		})
+		return
+	}
+
+	if err := h.service.SetPin(r.Context(), userID, req.Pin); err != nil {
+		if errors.Is(err, ErrInvalidPIN) {
+			respondJSON(w, http.StatusBadRequest, map[string]interface{}{
+				"success": false,
+				"message": "PIN harus terdiri dari 6 digit angka",
+			})
+			return
+		}
+		respondJSON(w, http.StatusInternalServerError, map[string]interface{}{
+			"success": false,
+			"message": "failed to set PIN",
+		})
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"message": "PIN berhasil disimpan",
+	})
+}
+
+func (h *Handler) RemovePin(w http.ResponseWriter, r *http.Request) {
+	userID, ok := GetUserID(r.Context())
+	if !ok {
+		respondUnauthorized(w, "unauthorized")
+		return
+	}
+
+	if err := h.service.RemovePin(r.Context(), userID); err != nil {
+		respondJSON(w, http.StatusInternalServerError, map[string]interface{}{
+			"success": false,
+			"message": "failed to remove PIN",
+		})
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"message": "PIN berhasil dinonaktifkan",
+	})
+}
+
 func respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(data)
 }
+

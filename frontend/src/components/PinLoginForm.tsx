@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { verifyPin, getPinUserEmail, removePin } from '../utils/pinAuth';
+import { getPinUserEmail, setRememberedEmail } from '../utils/pinAuth';
 
 interface PinLoginFormProps {
   onSwitchToPassword: () => void;
 }
 
 export const PinLoginForm: React.FC<PinLoginFormProps> = ({ onSwitchToPassword }) => {
-  const { loginWithToken, isLoading } = useAuth();
+  const { loginWithPin, isLoading } = useAuth();
   const [pin, setPin] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [isVerifying, setIsVerifying] = useState<boolean>(false);
-  const email = getPinUserEmail();
+  const [email, setEmail] = useState<string>(getPinUserEmail());
+  const [isEditingEmail, setIsEditingEmail] = useState<boolean>(!getPinUserEmail());
 
   const handleDigit = async (digit: string) => {
     if (pin.length >= 6 || isVerifying || isLoading) return;
@@ -37,22 +38,23 @@ export const PinLoginForm: React.FC<PinLoginFormProps> = ({ onSwitchToPassword }
   };
 
   const submitPin = async (fullPin: string) => {
+    if (!email || !email.includes('@')) {
+      setError('Masukkan alamat email yang valid terlebih dahulu');
+      setPin('');
+      setIsEditingEmail(true);
+      return;
+    }
+
     setIsVerifying(true);
     setError('');
 
     try {
-      const token = await verifyPin(fullPin);
-      if (!token) {
-        setError('PIN salah, silakan coba lagi');
-        setPin('');
-        setIsVerifying(false);
-        return;
-      }
-
-      await loginWithToken(token);
-    } catch {
-      setError('Sesi login telah berakhir. Silakan masuk kembali dengan password.');
-      removePin();
+      await loginWithPin(email, fullPin);
+      setRememberedEmail(email);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'PIN salah, silakan coba lagi';
+      setError(msg);
+      setPin('');
       setIsVerifying(false);
     }
   };
@@ -75,15 +77,39 @@ export const PinLoginForm: React.FC<PinLoginFormProps> = ({ onSwitchToPassword }
       <div className="auth-card__header">
         <div className="pin-avatar-badge">👤</div>
         <h2 className="auth-card__title">Quick PIN Login</h2>
-        <p className="auth-card__subtitle">
-          {email ? (
-            <span>
-              Masuk sebagai <strong className="pin-user-highlight">{email}</strong>
-            </span>
-          ) : (
-            'Masukkan 6-digit PIN akses cepat Anda'
-          )}
-        </p>
+        {isEditingEmail ? (
+          <div style={{ marginTop: 'var(--space-2)', marginBottom: 'var(--space-2)' }}>
+            <input
+              type="email"
+              placeholder="Masukkan email akun Anda"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{ textAlign: 'center', fontSize: 'var(--font-size-sm)' }}
+            />
+            {getPinUserEmail() && (
+              <button
+                type="button"
+                className="btn-link"
+                style={{ fontSize: '0.8rem', marginTop: 'var(--space-1)' }}
+                onClick={() => setIsEditingEmail(false)}
+              >
+                Gunakan email tersimpan
+              </button>
+            )}
+          </div>
+        ) : (
+          <p className="auth-card__subtitle">
+            Masuk sebagai <strong className="pin-user-highlight">{email}</strong>{' '}
+            <button
+              type="button"
+              className="btn-link"
+              style={{ fontSize: '0.8rem', marginLeft: 'var(--space-2)' }}
+              onClick={() => setIsEditingEmail(true)}
+            >
+              (Ganti)
+            </button>
+          </p>
+        )}
       </div>
 
       {error && (

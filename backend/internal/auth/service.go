@@ -14,6 +14,8 @@ var (
 	ErrInvalidEmail       = errors.New("invalid email address format")
 	ErrInvalidCredentials = errors.New("invalid email or password")
 	ErrInvalidCycleDay    = errors.New("cycle start day must be between 1 and 31")
+	ErrPinNotConfigured   = errors.New("pin has not been configured for this account")
+	ErrInvalidPinCredentials = errors.New("invalid email or pin")
 )
 
 // AuthResponse is returned on successful registration or login.
@@ -26,6 +28,9 @@ type AuthResponse struct {
 type Service interface {
 	Register(ctx context.Context, email, password string, cycleStartDay int) (*AuthResponse, error)
 	Login(ctx context.Context, email, password string) (*AuthResponse, error)
+	PinLogin(ctx context.Context, email, pin string) (*AuthResponse, error)
+	SetPin(ctx context.Context, userID uuid.UUID, pin string) error
+	RemovePin(ctx context.Context, userID uuid.UUID) error
 	GetProfile(ctx context.Context, userID uuid.UUID) (*UserProfile, error)
 	UpdateSettings(ctx context.Context, userID uuid.UUID, cycleStartDay int) (*UserSettings, error)
 }
@@ -137,6 +142,65 @@ func (s *DefaultService) Login(ctx context.Context, email, password string) (*Au
 	}, nil
 }
 
+// PinLogin authenticates a user using their email and 6-digit PIN.
+func (s *DefaultService) PinLogin(ctx context.Context, email, pin string) (*AuthResponse, error) {
+	cleanEmail := strings.ToLower(strings.TrimSpace(email))
+	if cleanEmail == "" || len(pin) != 6 {
+		return nil, ErrInvalidPinCredentials
+	}
+
+	user, err := s.repo.GetUserByEmail(ctx, cleanEmail)
+	if err != nil {
+		if errors.Is(err, ErrUserNotFound) {
+			return nil, ErrInvalidPinCredentials
+		}
+		return nil, fmt.Errorf("pin login: get user: %w", err)
+	}
+
+	if user.PinHash == nil || *user.PinHash == "" {
+		return nil, ErrPinNotConfigured
+	}
+
+	if !CheckPasswordHash(pin, *user.PinHash) {
+		return nil, ErrInvalidPinCredentials
+	}
+
+	token, err := s.tokens.GenerateToken(*user)
+	if err != nil {
+		return nil, fmt.Errorf("pin login: generate token: %w", err)
+	}
+
+	profile, err := s.repo.GetUserProfile(ctx, user.ID)
+	if err != nil {
+		profile = &UserProfile{
+			ID:            user.ID,
+			Email:         user.Email,
+			CycleStartDay: 1,
+			CreatedAt:     user.CreatedAt,
+			HasPin:        true,
+		}
+	}
+
+	return &AuthResponse{
+		Token:   token,
+		Profile: *profile,
+	}, nil
+}
+
+// SetPin validates and sets the 6-digit PIN hash for a user.
+func (s *DefaultService) SetPin(ctx context.Context, userID uuid.UUID, pin string) error {
+	hash, err := HashPIN(pin)
+	if err != nil {
+		return err
+	}
+	return s.repo.SetPinHash(ctx, userID, &hash)
+}
+
+// RemovePin removes the PIN for a user.
+func (s *DefaultService) RemovePin(ctx context.Context, userID uuid.UUID) error {
+	return s.repo.SetPinHash(ctx, userID, nil)
+}
+
 // GetProfile retrieves the profile and preferences for the given user ID.
 func (s *DefaultService) GetProfile(ctx context.Context, userID uuid.UUID) (*UserProfile, error) {
 	return s.repo.GetUserProfile(ctx, userID)
@@ -149,3 +213,4 @@ func (s *DefaultService) UpdateSettings(ctx context.Context, userID uuid.UUID, c
 	}
 	return s.repo.UpdateUserSettings(ctx, userID, cycleStartDay)
 }
+
