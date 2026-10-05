@@ -1,4 +1,5 @@
 import { getToken } from './auth';
+import { API_BASE_URL } from '../config';
 
 export type AccountType = 'BANK' | 'E_WALLET' | 'CASH' | 'INVESTMENT' | 'OTHER';
 export type AccountStatus = 'ACTIVE' | 'ARCHIVED';
@@ -27,10 +28,6 @@ export interface UpdateAccountInput {
   type: AccountType;
   status: AccountStatus;
 }
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL ||
-  (typeof window !== 'undefined' && window.location?.origin?.startsWith('http') ? '' : 'http://localhost:8080');
 
 async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
   const token = getToken();

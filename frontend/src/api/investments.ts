@@ -1,4 +1,5 @@
 import { getToken } from './auth';
+import { API_BASE_URL } from '../config';
 
 export type InvestmentType = 'STOCK' | 'MUTUAL_FUND' | 'GOLD' | 'CRYPTO' | 'OTHER';
 
@@ -46,10 +47,6 @@ export interface UpdateValuationInput {
   current_value: number;
   notes?: string;
 }
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL ||
-  (typeof window !== 'undefined' && window.location?.origin?.startsWith('http') ? '' : 'http://localhost:8080');
 
 async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
   const token = getToken();

@@ -1,4 +1,5 @@
 import { getToken } from './auth';
+import { API_BASE_URL } from '../config';
 
 export interface DashboardCycle {
   start_date: string;
@@ -39,7 +40,6 @@ export interface DashboardData {
   accounts: AccountSummary[];
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
   const token = getToken();

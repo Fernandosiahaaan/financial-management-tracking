@@ -1,4 +1,5 @@
 import { getToken } from './auth';
+import { API_BASE_URL } from '../config';
 
 export type ReceivableStatus = 'ACTIVE' | 'PARTIALLY_PAID' | 'PAID' | 'OVERDUE' | 'WRITTEN_OFF';
 
@@ -55,10 +56,6 @@ export interface UpdateStatusInput {
   status: ReceivableStatus;
   notes?: string;
 }
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL ||
-  (typeof window !== 'undefined' && window.location?.origin?.startsWith('http') ? '' : 'http://localhost:8080');
 
 async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
   const token = getToken();

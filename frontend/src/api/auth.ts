@@ -1,3 +1,5 @@
+import { API_BASE_URL } from '../config';
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -16,7 +18,6 @@ export interface ApiResponse<T> {
   data?: T;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 const TOKEN_KEY = 'fintrack_token';
 
 export function getToken(): string | null {
