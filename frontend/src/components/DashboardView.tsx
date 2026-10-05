@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { fetchHealth, type HealthResponse } from '../api/client';
 import { UserSettingsCard } from './UserSettingsCard';
 import { AccountsManager } from './AccountsManager';
 import { CategoriesManager } from './CategoriesManager';
@@ -45,9 +44,6 @@ export const DashboardView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveNavTab>('overview');
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [accounts, setAccounts] = useState<Account[]>([]);
-  const [health, setHealth] = useState<HealthResponse | null>(null);
-  const [healthLoading, setHealthLoading] = useState<boolean>(true);
-  const [healthError, setHealthError] = useState<string>('');
 
   // Lock body scrolling on mobile when sidebar drawer is open
   useEffect(() => {
@@ -61,19 +57,6 @@ export const DashboardView: React.FC = () => {
     };
   }, [sidebarOpen]);
 
-  const loadHealth = async () => {
-    setHealthLoading(true);
-    setHealthError('');
-    try {
-      const data = await fetchHealth();
-      setHealth(data);
-    } catch (err) {
-      setHealthError(err instanceof Error ? err.message : 'System health check failed');
-    } finally {
-      setHealthLoading(false);
-    }
-  };
-
   const loadAccounts = async () => {
     try {
       const accs = await listAccounts();
@@ -84,7 +67,6 @@ export const DashboardView: React.FC = () => {
   };
 
   useEffect(() => {
-    loadHealth();
     loadAccounts();
   }, []);
 
@@ -233,84 +215,46 @@ export const DashboardView: React.FC = () => {
 
         {activeTab === 'overview' && (
           <>
-            <DashboardOverview onNavigateTab={(tab) => setActiveTab(tab as ActiveNavTab)} />
-
-            <section className="profile-banner">
-              <h2 className="banner-title">Welcome, {user?.email}!</h2>
-              <p className="banner-subtitle">
-                Your personal finance workspace is secured and authenticated.
-              </p>
-              <div className="profile-details-grid">
-                <div className="detail-item">
-                  <span className="detail-label">Account ID</span>
-                  <code className="detail-code">{user?.id}</code>
+            <section className="profile-banner welcome-banner">
+              <div className="welcome-banner-header">
+                <div className="welcome-banner-text">
+                  <div className="welcome-greeting-row">
+                    <h2 className="banner-title">Welcome, {user?.email}!</h2>
+                    <span className="badge badge--success welcome-badge">
+                      🛡️ Akun Aktif
+                    </span>
+                  </div>
+                  <p className="banner-subtitle">
+                    Workspace finansial pribadi Anda untuk memantau arus kas, alokasi anggaran, dan portofolio aset secara real-time.
+                  </p>
                 </div>
-                <div className="detail-item">
-                  <span className="detail-label">Cycle Start Day</span>
-                  <span className="detail-value">Day {user?.cycle_start_day} of each month</span>
-                </div>
-              </div>
-            </section>
-
-            {/* User Settings */}
-            <UserSettingsCard />
-
-            {/* System Health Status */}
-            <section className="health-card" id="system-health-card">
-              <div className="health-card__top">
-                <h3 className="health-card__title">⚡ Backend & Database Health</h3>
                 <button
-                  className="btn-refresh"
-                  onClick={loadHealth}
-                  disabled={healthLoading}
-                  title="Refresh health status"
+                  type="button"
+                  className="btn btn--outline btn--sm welcome-profile-btn"
+                  onClick={() => handleSelectTab('settings')}
+                  title="Buka Profil & Pengaturan Lengkap"
                 >
-                  🔄 Refresh
+                  ⚙️ Kelola Profil & PIN
                 </button>
               </div>
 
-              {healthLoading && (
-                <div className="health-loading">
-                  <div className="spinner" />
-                  <span>Verifying service connectivity…</span>
+              <div className="welcome-meta-chips">
+                <div className="welcome-chip">
+                  <span className="welcome-chip-icon">📅</span>
+                  <span className="welcome-chip-label">Siklus Periode:</span>
+                  <strong className="welcome-chip-val">Day {user?.cycle_start_day || 1} of each month</strong>
                 </div>
-              )}
-
-              {healthError && (
-                <div className="auth-alert auth-alert--error">
-                  <span>⚠️ {healthError}</span>
+                <div className="welcome-chip">
+                  <span className="welcome-chip-icon">🔐</span>
+                  <span className="welcome-chip-label">Keamanan PIN:</span>
+                  <span className={user?.has_pin ? 'text-success' : 'text-muted'}>
+                    {user?.has_pin ? '🟢 Aktif di Database' : '⚪ Belum Dikonfigurasi'}
+                  </span>
                 </div>
-              )}
-
-              {!healthLoading && !healthError && health && (
-                <div className="health-card__rows">
-                  <div className="health-row">
-                    <span className="health-row__label">API Status</span>
-                    <span className="health-row__value">
-                      <span className={`status-badge status-badge--${health.status}`}>
-                        <span className="status-badge__dot" />
-                        {health.status}
-                      </span>
-                    </span>
-                  </div>
-                  <div className="health-row">
-                    <span className="health-row__label">PostgreSQL</span>
-                    <span className="health-row__value">
-                      <span
-                        className={`status-badge ${
-                          health.database === 'connected'
-                            ? 'status-badge--healthy'
-                            : 'status-badge--unhealthy'
-                        }`}
-                      >
-                        <span className="status-badge__dot" />
-                        {health.database}
-                      </span>
-                    </span>
-                  </div>
-                </div>
-              )}
+              </div>
             </section>
+
+            <DashboardOverview onNavigateTab={(tab) => setActiveTab(tab as ActiveNavTab)} />
           </>
         )}
 

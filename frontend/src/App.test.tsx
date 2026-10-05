@@ -125,6 +125,9 @@ describe('App & Authentication Flow', () => {
       expect(screen.getByText(/Welcome, investor@example.com!/i)).toBeInTheDocument();
     });
 
+    // Navigate to profile & settings
+    fireEvent.click(screen.getByRole('button', { name: /Profile & Settings/i }));
+
     const cycleInput = screen.getByLabelText(/Cycle Start Day/i);
     fireEvent.change(cycleInput, { target: { value: '15' } });
 

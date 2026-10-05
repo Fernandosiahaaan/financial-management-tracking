@@ -1204,65 +1204,182 @@
   margin-top: var(--space-1);
 }
 
-/* ── Profile Banner & Settings ─────────────────────────────────── */
+/* ── Welcome Banner & Profile Settings ─────────────────────────── */
 
-.profile-banner {
+.welcome-banner {
+  background: linear-gradient(135deg, var(--color-bg-card) 0%, rgba(16, 185, 129, 0.05) 100%);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5) var(--space-6);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--color-brand-primary);
+}
+
+.welcome-banner-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.welcome-banner-text {
+  flex: 1;
+  min-width: 260px;
+}
+
+.welcome-greeting-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.welcome-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+}
+
+.welcome-profile-btn {
+  font-size: var(--font-size-xs);
+  padding: 0.45rem 0.85rem;
+  white-space: nowrap;
+  border-radius: var(--radius-md);
+}
+
+.welcome-meta-chips {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.welcome-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.welcome-chip-icon {
+  font-size: 1rem;
+}
+
+.welcome-chip-label {
+  color: var(--color-text-tertiary);
+}
+
+.welcome-chip-val {
+  color: var(--color-brand-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ── User Profile Information Card ────────────────────────────── */
+
+.profile-settings-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+.user-profile-card {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   padding: var(--space-5) var(--space-6);
   box-shadow: var(--shadow-sm);
-  text-align: left;
 }
 
-.banner-title {
-  font-size: var(--font-size-2xl);
+.user-profile-card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.user-profile-avatar-wrapper {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(59, 130, 246, 0.2) 100%);
+  border: 2px solid var(--color-brand-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  flex-shrink: 0;
+}
+
+.user-profile-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.user-profile-title {
+  font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
 }
 
-.banner-subtitle {
+.user-profile-email {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
-  margin-top: var(--space-1);
-  margin-bottom: var(--space-4);
+  font-weight: var(--font-weight-medium);
 }
 
-.profile-details-grid {
+.user-profile-info-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: var(--space-4);
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--color-border-light);
+  gap: var(--space-3);
 }
 
-.detail-item {
+.profile-info-box {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 4px;
 }
 
-.detail-label {
-  font-size: var(--font-size-xs);
+.profile-info-label {
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--color-text-muted);
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-medium);
 }
 
-.detail-code {
-  font-family: monospace;
-  font-size: var(--font-size-xs);
-  background: var(--color-bg-secondary);
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-primary);
-  word-break: break-all;
-}
-
-.detail-value {
+.profile-info-value {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-brand-primary);
+  color: var(--color-text-primary);
 }
 
 .settings-card {
