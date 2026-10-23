@@ -38,13 +38,15 @@ type Allocation struct {
 
 // AllocationSummary provides the allocation distribution overview for a cycle.
 type AllocationSummary struct {
-	Allocations              []Allocation `json:"allocations"`
-	TotalAllocated           int64        `json:"total_allocated"`
-	FormattedTotalAllocated  string       `json:"formatted_total_allocated,omitempty"`
-	TotalIncome              int64        `json:"total_income"`
-	FormattedTotalIncome     string       `json:"formatted_total_income,omitempty"`
-	RemainingIncome          int64        `json:"remaining_income"`
-	FormattedRemainingIncome string       `json:"formatted_remaining_income,omitempty"`
+	Allocations                []Allocation `json:"allocations"`
+	TotalAllocated             int64        `json:"total_allocated"`
+	FormattedTotalAllocated    string       `json:"formatted_total_allocated,omitempty"`
+	TotalIncome                int64        `json:"total_income"`
+	FormattedTotalIncome       string       `json:"formatted_total_income,omitempty"`
+	RemainingIncome            int64        `json:"remaining_income"`
+	FormattedRemainingIncome   string       `json:"formatted_remaining_income,omitempty"`
+	BudgetBuyingPower          int64        `json:"budget_buying_power"`
+	FormattedBudgetBuyingPower string       `json:"formatted_budget_buying_power,omitempty"`
 }
 
 // CreateAllocationInput defines the payload for creating an allocation.

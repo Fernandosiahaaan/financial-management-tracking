@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import * as categoriesApi from '../api/categories';
 import type { Category, CategoryType } from '../api/categories';
-import { Plus } from 'lucide-react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 
 const AVAILABLE_ICONS = ['tag', 'shopping-cart', 'utensils', 'car', 'home', 'film', 'zap', 'briefcase', 'wallet', 'gift', 'heart', 'book'];
 const AVAILABLE_COLORS = ['#6366F1', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#14B8A6'];
@@ -125,7 +125,7 @@ export const CategoriesManager: React.FC = () => {
     <div className="categories-manager" id="categories-manager">
       <div className="section-header">
         <div>
-          <h3 className="section-title">🏷️ Categories</h3>
+          <h2 className="section-title">🏷️ Categories</h2>
           <p className="section-subtitle">
             Organize and classify your income streams and expense destinations.
           </p>
@@ -136,7 +136,7 @@ export const CategoriesManager: React.FC = () => {
           onClick={handleOpenCreate}
         >
           <Plus size={16} className="btn-icon-svg" />
-          <span>+ Add Category</span>
+          <span>Add Category</span>
         </button>
       </div>
 
@@ -279,7 +279,7 @@ export const CategoriesManager: React.FC = () => {
           <span className="empty-icon">🏷️</span>
           <p className="empty-title">No Categories Found</p>
           <p className="empty-subtitle">
-            Click "+ Add Category" to classify your finances.
+            Click "Add Category" to classify your finances.
           </p>
         </div>
       ) : (
@@ -304,20 +304,22 @@ export const CategoriesManager: React.FC = () => {
 
               <div className="category-actions">
                 <button
-                  className="btn-action"
+                  className="btn-action btn-action--edit"
                   onClick={() => handleOpenEdit(cat)}
                   id={`btn-edit-category-${cat.id}`}
                   title="Edit Category"
+                  aria-label="Edit Category"
                 >
-                  ✏️
+                  <Pencil size={14} />
                 </button>
                 <button
                   className="btn-action btn-action--danger"
                   onClick={() => handleDelete(cat.id, cat.name)}
                   id={`btn-delete-category-${cat.id}`}
                   title="Delete Category"
+                  aria-label="Delete Category"
                 >
-                  🗑️
+                  <Trash2 size={14} />
                 </button>
               </div>
             </div>

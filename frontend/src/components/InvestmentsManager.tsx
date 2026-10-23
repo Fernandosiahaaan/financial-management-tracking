@@ -12,7 +12,7 @@ import type { Account } from '../api/accounts';
 import { formatRupiah, formatNumberIDR, parseRupiahToCents, formatCurrencyInput } from '../utils/currency';
 import { usePrivacy } from '../context/PrivacyContext';
 import { PrivacyToggle } from './PrivacyToggle';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Pencil, Trash2 } from 'lucide-react';
 
 interface InvestmentsManagerProps {
   accounts: Account[];
@@ -183,10 +183,10 @@ export const InvestmentsManager: React.FC<InvestmentsManagerProps> = ({ accounts
       <div className="investments-header">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <h2>📈 Investment Portfolio</h2>
+            <h2 className="section-title">📈 Investment Portfolio</h2>
             <PrivacyToggle variant="icon" id="investments-privacy-toggle" />
           </div>
-          <p className="section-description">
+          <p className="section-subtitle section-description">
             Track investments across stocks, mutual funds, gold, and crypto. Market performance affects total wealth without being treated as operational income.
           </p>
         </div>
@@ -200,12 +200,12 @@ export const InvestmentsManager: React.FC<InvestmentsManagerProps> = ({ accounts
           {isFormOpen ? (
             <>
               <X size={16} className="btn-icon-svg" />
-              <span>✕ Cancel</span>
+              <span>Cancel</span>
             </>
           ) : (
             <>
               <Plus size={16} className="btn-icon-svg" />
-              <span>+ Add Investment Holding</span>
+              <span>Add Investment Holding</span>
             </>
           )}
         </button>
@@ -262,6 +262,7 @@ export const InvestmentsManager: React.FC<InvestmentsManagerProps> = ({ accounts
               <label htmlFor="inv-type">Asset Class *</label>
               <select
                 id="inv-type"
+                className="form-select"
                 value={invType}
                 onChange={(e) => setInvType(e.target.value as InvestmentType)}
               >
@@ -316,6 +317,7 @@ export const InvestmentsManager: React.FC<InvestmentsManagerProps> = ({ accounts
               <label htmlFor="inv-source-account">Funded From Account (Optional)</label>
               <select
                 id="inv-source-account"
+                className="form-select"
                 value={sourceAccountId}
                 onChange={(e) => setSourceAccountId(e.target.value)}
               >
@@ -417,22 +419,24 @@ export const InvestmentsManager: React.FC<InvestmentsManagerProps> = ({ accounts
                 <div className="investment-actions">
                   <button
                     type="button"
-                    className="btn-sm btn-primary"
+                    className="btn-action btn-action--edit"
                     onClick={() => {
                       setEditingInv(inv);
                       setNewValuation(formatNumberIDR(inv.current_value));
                       setValNotes(inv.notes || '');
                     }}
                   >
-                    Update Valuation
+                    <Pencil size={13} />
+                    <span>Update Valuation</span>
                   </button>
                   <button
                     type="button"
-                    className="btn-sm btn-danger"
+                    className="btn-action btn-action--danger"
                     onClick={() => handleDelete(inv.id, inv.name)}
                     title="Remove from portfolio"
+                    aria-label="Remove from portfolio"
                   >
-                    🗑
+                    <Trash2 size={13} />
                   </button>
                 </div>
               </div>

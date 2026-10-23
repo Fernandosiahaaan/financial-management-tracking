@@ -63,7 +63,7 @@ describe('AccountsManager Component', () => {
       expect(screen.getByText(/No Accounts Configured Yet/i)).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /\+ Add Account/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Add Account/i }));
 
     const nameInput = screen.getByLabelText(/Account Name/i);
     const balanceInput = screen.getByLabelText(/Opening Balance/i);

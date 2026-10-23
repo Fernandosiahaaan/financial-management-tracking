@@ -113,15 +113,21 @@ func (s *DefaultService) ListAllocations(ctx context.Context, userID uuid.UUID, 
 	}
 
 	remainingIncome := totalIncome - totalAllocated
+	budgetBuyingPower := remainingIncome
+	if budgetBuyingPower < 0 {
+		budgetBuyingPower = 0
+	}
 
 	return &AllocationSummary{
-		Allocations:              allocations,
-		TotalAllocated:           totalAllocated,
-		FormattedTotalAllocated:  money.FormatIDR(totalAllocated),
-		TotalIncome:              totalIncome,
-		FormattedTotalIncome:     money.FormatIDR(totalIncome),
-		RemainingIncome:          remainingIncome,
-		FormattedRemainingIncome: money.FormatIDR(remainingIncome),
+		Allocations:                allocations,
+		TotalAllocated:             totalAllocated,
+		FormattedTotalAllocated:    money.FormatIDR(totalAllocated),
+		TotalIncome:                totalIncome,
+		FormattedTotalIncome:       money.FormatIDR(totalIncome),
+		RemainingIncome:            remainingIncome,
+		FormattedRemainingIncome:   money.FormatIDR(remainingIncome),
+		BudgetBuyingPower:          budgetBuyingPower,
+		FormattedBudgetBuyingPower: money.FormatIDR(budgetBuyingPower),
 	}, nil
 }
 

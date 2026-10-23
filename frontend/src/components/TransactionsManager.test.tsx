@@ -101,7 +101,7 @@ describe('TransactionsManager Component', () => {
       expect(screen.getByText(/No transactions recorded/i)).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /\+ Record Transaction/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Record Transaction/i }));
 
     // Switch to Transfer tab
     fireEvent.click(screen.getByRole('button', { name: /^Transfer$/i }));

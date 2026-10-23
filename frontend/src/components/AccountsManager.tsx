@@ -4,7 +4,7 @@ import type { Account, AccountType, AccountStatus } from '../api/accounts';
 import { formatNumberIDR, parseRupiahToCents, formatCurrencyInput } from '../utils/currency';
 import { usePrivacy } from '../context/PrivacyContext';
 import { PrivacyToggle } from './PrivacyToggle';
-import { Plus } from 'lucide-react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 
 export const AccountsManager: React.FC = () => {
   const { formatAmount } = usePrivacy();
@@ -136,7 +136,7 @@ export const AccountsManager: React.FC = () => {
     <div className="accounts-manager" id="accounts-manager">
       <div className="section-header">
         <div>
-          <h3 className="section-title">🏛️ Financial Accounts</h3>
+          <h2 className="section-title">🏛️ Financial Accounts</h2>
           <p className="section-subtitle">
             Manage your bank accounts, e-wallets, cash, and investment locations.
           </p>
@@ -147,7 +147,7 @@ export const AccountsManager: React.FC = () => {
           onClick={handleOpenCreate}
         >
           <Plus size={16} className="btn-icon-svg" />
-          <span>+ Add Account</span>
+          <span>Add Account</span>
         </button>
       </div>
 
@@ -281,7 +281,7 @@ export const AccountsManager: React.FC = () => {
           <span className="empty-icon">🏦</span>
           <p className="empty-title">No Accounts Configured Yet</p>
           <p className="empty-subtitle">
-            Click "+ Add Account" to configure your first bank account or wallet.
+            Click "Add Account" to configure your first bank account or wallet.
           </p>
         </div>
       ) : (
@@ -321,18 +321,22 @@ export const AccountsManager: React.FC = () => {
 
               <div className="account-card__footer">
                 <button
-                  className="btn-action"
+                  className="btn-action btn-action--edit"
                   onClick={() => handleOpenEdit(acc)}
                   id={`btn-edit-account-${acc.id}`}
+                  title="Edit Account"
                 >
-                  ✏️ Edit
+                  <Pencil size={13} />
+                  <span>Edit</span>
                 </button>
                 <button
                   className="btn-action btn-action--danger"
                   onClick={() => handleDelete(acc.id, acc.name)}
                   id={`btn-delete-account-${acc.id}`}
+                  title="Delete Account"
                 >
-                  🗑️ Delete
+                  <Trash2 size={13} />
+                  <span>Delete</span>
                 </button>
               </div>
             </div>

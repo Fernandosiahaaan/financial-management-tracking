@@ -10,8 +10,9 @@ import {
   type CreateAllocationInput,
 } from '../api/allocations';
 import { listCategories, type Category } from '../api/categories';
+import { listBudgets, type Budget } from '../api/budgets';
 import { formatRupiah, formatNumberIDR, parseRupiahToCents, formatCurrencyInput } from '../utils/currency';
-import { Plus } from 'lucide-react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 
 /** Format IDR amount */
 function fmtIDR(amount: number): string {
@@ -22,6 +23,7 @@ export const AllocationManager: React.FC = () => {
   const [cycleSummary, setCycleSummary] = useState<CycleSummary | null>(null);
   const [summaryData, setSummaryData] = useState<AllocationSummary | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [formError, setFormError] = useState('');
@@ -41,8 +43,12 @@ export const AllocationManager: React.FC = () => {
       setCycleSummary(summary);
       setCategories(cats);
 
-      const allocSummary = await listAllocations(summary.cycle.start_date, summary.cycle.end_date);
+      const [allocSummary, bList] = await Promise.all([
+        listAllocations(summary.cycle.start_date, summary.cycle.end_date),
+        listBudgets(summary.cycle.start_date, summary.cycle.end_date).catch(() => []),
+      ]);
       setSummaryData(allocSummary);
+      setBudgets(bList);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load allocation data');
     } finally {
@@ -58,6 +64,12 @@ export const AllocationManager: React.FC = () => {
   const totalIncome = summaryData?.total_income || 0;
   const totalAllocated = summaryData?.total_allocated || 0;
   const remainingIncome = summaryData?.remaining_income || 0;
+
+  // Buying Power & Budget Savings Intelligence
+  const budgetBuyingPower = Math.max(0, remainingIncome);
+  const totalPlannedBudget = budgets.reduce((sum, b) => sum + b.planned_amount, 0);
+  const projectedCycleSavings = budgetBuyingPower > totalPlannedBudget ? budgetBuyingPower - totalPlannedBudget : 0;
+  const totalCycleSavings = totalAllocated + projectedCycleSavings;
 
   // Categories already allocated for this cycle
   const allocatedCategoryIDs = new Set(allocations.map((a) => a.category_id));
@@ -181,8 +193,8 @@ export const AllocationManager: React.FC = () => {
     <section className="manager-card" id="allocation-manager">
       <div className="manager-card__header">
         <div>
-          <h2 className="manager-card__title">🎯 Income Allocation</h2>
-          <p className="manager-card__subtitle">
+          <h2 className="section-title manager-card__title">🎯 Income Allocation</h2>
+          <p className="section-subtitle manager-card__subtitle">
             Distribute earned cycle income across designated purposes. Total allocations cannot exceed total income.
           </p>
         </div>
@@ -195,7 +207,7 @@ export const AllocationManager: React.FC = () => {
             title={remainingIncome <= 0 ? 'No unallocated income remaining' : 'Add allocation'}
           >
             <Plus size={16} className="btn-icon-svg" />
-            <span>+ Add Allocation</span>
+            <span>Add Allocation</span>
           </button>
         )}
       </div>
@@ -220,6 +232,22 @@ export const AllocationManager: React.FC = () => {
           <span className="allocation-summary-chip__label">Remaining Unallocated</span>
           <span className="allocation-summary-chip__value">{fmtIDR(remainingIncome)}</span>
         </div>
+        {budgets.length > 0 && (
+          <>
+            <div className="allocation-summary-chip">
+              <span className="allocation-summary-chip__label">Budget Planned</span>
+              <span className="allocation-summary-chip__value">{fmtIDR(totalPlannedBudget)}</span>
+            </div>
+            <div className="allocation-summary-chip">
+              <span className="allocation-summary-chip__label">Projected Savings</span>
+              <span className="allocation-summary-chip__value text-success">+{fmtIDR(projectedCycleSavings)}</span>
+            </div>
+            <div className="allocation-summary-chip">
+              <span className="allocation-summary-chip__label">Total Cycle Savings</span>
+              <span className="allocation-summary-chip__value text-success">+{fmtIDR(totalCycleSavings)}</span>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Overall Distribution Progress Track */}
@@ -260,6 +288,7 @@ export const AllocationManager: React.FC = () => {
               <label htmlFor="allocation-category">Category</label>
               <select
                 id="allocation-category"
+                className="form-select"
                 value={selectedCategoryID}
                 onChange={(e) => setSelectedCategoryID(e.target.value)}
                 required
@@ -267,7 +296,7 @@ export const AllocationManager: React.FC = () => {
                 <option value="">Select a category…</option>
                 {availableCategories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
-                    {cat.name} ({cat.type})
+                    {cat.name} ({cat.type === 'EXPENSE' ? 'Expense' : 'Income'})
                   </option>
                 ))}
               </select>
@@ -340,18 +369,20 @@ export const AllocationManager: React.FC = () => {
                   </div>
                   <div className="allocation-card__actions">
                     <button
-                      className="btn-icon"
+                      className="btn-action btn-action--edit"
                       onClick={() => startEdit(a)}
                       title="Edit allocation"
+                      aria-label="Edit allocation"
                     >
-                      ✏️
+                      <Pencil size={13} />
                     </button>
                     <button
-                      className="btn-icon"
+                      className="btn-action btn-action--danger"
                       onClick={() => handleDelete(a.id)}
                       title="Remove allocation"
+                      aria-label="Remove allocation"
                     >
-                      🗑️
+                      <Trash2 size={13} />
                     </button>
                   </div>
                 </div>

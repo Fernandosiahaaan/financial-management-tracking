@@ -20,6 +20,7 @@ export interface AllocationSummary {
   total_allocated: number;
   total_income: number;
   remaining_income: number;
+  budget_buying_power?: number;
 }
 
 export interface CreateAllocationInput {

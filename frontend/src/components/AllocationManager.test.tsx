@@ -107,7 +107,7 @@ describe('AllocationManager Component', () => {
       expect(screen.getByText('Essential Living')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /\+ Add Allocation/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Add Allocation/i }));
 
     const categorySelect = screen.getByLabelText(/Category/i);
     const amountInput = screen.getByLabelText(/Allocated Amount/i);
@@ -146,7 +146,7 @@ describe('AllocationManager Component', () => {
       expect(screen.getByText(/No income allocations for this cycle yet/i)).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /\+ Add Allocation/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Add Allocation/i }));
 
     const categorySelect = screen.getByLabelText(/Category/i);
     const amountInput = screen.getByLabelText(/Allocated Amount/i);

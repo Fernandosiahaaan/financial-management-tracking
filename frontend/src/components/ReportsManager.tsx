@@ -72,7 +72,7 @@ export const ReportsManager: React.FC = () => {
       <div className="manager-header">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <h2 className="manager-title">📑 Reports & Asset Snapshots</h2>
+            <h2 className="section-title manager-title">📑 Reports & Asset Snapshots</h2>
             <PrivacyToggle variant="icon" id="reports-privacy-toggle" />
           </div>
           <p className="manager-subtitle">

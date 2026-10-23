@@ -288,7 +288,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
                   onClick={() => onNavigateTab('budgets')}
                 >
                   <PlusCircle size={15} className="btn-icon-svg" />
-                  <span>+ Add First Budget</span>
+                  <span>Add First Budget</span>
                 </button>
               )}
             </div>
@@ -395,7 +395,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
                   onClick={() => onNavigateTab('accounts')}
                 >
                   <PlusCircle size={15} className="btn-icon-svg" />
-                  <span>+ Add First Account</span>
+                  <span>Add First Account</span>
                 </button>
               )}
             </div>

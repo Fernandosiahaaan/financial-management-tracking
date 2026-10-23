@@ -12,7 +12,7 @@ import { type Category, listCategories } from '../api/categories';
 import { formatRupiah, formatNumberIDR, parseRupiahToCents, formatCurrencyInput } from '../utils/currency';
 import { usePrivacy } from '../context/PrivacyContext';
 import { PrivacyToggle } from './PrivacyToggle';
-import { Plus } from 'lucide-react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 
 interface TransactionsManagerProps {
   onBalanceChange?: () => void;
@@ -235,6 +235,16 @@ export const TransactionsManager: React.FC<TransactionsManagerProps> = ({ onBala
 
   return (
     <div className="transactions-manager">
+      {/* Section Header */}
+      <div className="section-header">
+        <div>
+          <h2 className="section-title">💸 Transactions & Cashflow</h2>
+          <p className="section-subtitle">
+            Record, categorize, and monitor all money coming in and going out of your financial accounts.
+          </p>
+        </div>
+      </div>
+
       {/* Summary KPI Banner */}
       <div className="tx-summary-banner">
         <div className="tx-stat-card income">
@@ -326,7 +336,7 @@ export const TransactionsManager: React.FC<TransactionsManagerProps> = ({ onBala
           id="btn-record-transaction"
         >
           <Plus size={16} className="btn-icon-svg" />
-          <span>+ Record Transaction</span>
+          <span>Record Transaction</span>
         </button>
       </div>
 
@@ -407,19 +417,21 @@ export const TransactionsManager: React.FC<TransactionsManagerProps> = ({ onBala
                     <td className="td-actions">
                       <button
                         onClick={() => handleOpenEditModal(tx)}
-                        className="btn-action edit"
-                        title="Edit"
+                        className="btn-action btn-action--edit edit"
+                        title="Edit transaction"
+                        aria-label="Edit transaction"
                         type="button"
                       >
-                        ✏️
+                        <Pencil size={13} />
                       </button>
                       <button
                         onClick={() => handleDelete(tx.id)}
-                        className="btn-action delete"
-                        title="Delete"
+                        className="btn-action btn-action--danger delete"
+                        title="Delete transaction"
+                        aria-label="Delete transaction"
                         type="button"
                       >
-                        🗑️
+                        <Trash2 size={13} />
                       </button>
                     </td>
                   </tr>
@@ -485,6 +497,7 @@ export const TransactionsManager: React.FC<TransactionsManagerProps> = ({ onBala
                 </label>
                 <select
                   id="tx-account"
+                  className="form-select"
                   value={formAccountId}
                   onChange={(e) => setFormAccountId(e.target.value)}
                   required
@@ -506,6 +519,7 @@ export const TransactionsManager: React.FC<TransactionsManagerProps> = ({ onBala
                   <label htmlFor="tx-dest-account">Destination Account *</label>
                   <select
                     id="tx-dest-account"
+                    className="form-select"
                     value={formDestAccountId}
                     onChange={(e) => setFormDestAccountId(e.target.value)}
                     required
@@ -530,6 +544,7 @@ export const TransactionsManager: React.FC<TransactionsManagerProps> = ({ onBala
                   <label htmlFor="tx-category">Category (Optional)</label>
                   <select
                     id="tx-category"
+                    className="form-select"
                     value={formCategoryId}
                     onChange={(e) => setFormCategoryId(e.target.value)}
                   >

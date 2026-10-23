@@ -82,7 +82,7 @@ describe('ReceivablesManager Component', () => {
 
     render(<ReceivablesManager accounts={mockAccounts} />);
 
-    const openBtn = screen.getByText('+ Lend Money / Add Receivable');
+    const openBtn = screen.getByRole('button', { name: /Lend Money \/ Add Receivable/i });
     fireEvent.click(openBtn);
 
     expect(screen.getByText('Record New Loan / Receivable')).toBeInTheDocument();

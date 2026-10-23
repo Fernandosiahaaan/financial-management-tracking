@@ -64,7 +64,7 @@ describe('CategoriesManager Component', () => {
       expect(screen.getByText(/No Categories Found/i)).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /\+ Add Category/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Add Category/i }));
 
     const nameInput = screen.getByLabelText(/Category Name/i);
     const submitBtn = screen.getByRole('button', { name: /Create Category/i });

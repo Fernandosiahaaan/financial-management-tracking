@@ -12,7 +12,7 @@ import type { Account } from '../api/accounts';
 import { formatRupiah, formatNumberIDR, parseRupiahToCents, formatCurrencyInput } from '../utils/currency';
 import { usePrivacy } from '../context/PrivacyContext';
 import { PrivacyToggle } from './PrivacyToggle';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Trash2 } from 'lucide-react';
 
 interface ReceivablesManagerProps {
   accounts: Account[];
@@ -208,10 +208,10 @@ export const ReceivablesManager: React.FC<ReceivablesManagerProps> = ({ accounts
       <div className="receivables-header">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <h2>🤝 Receivables & Loans</h2>
+            <h2 className="section-title">🤝 Receivables & Loans</h2>
             <PrivacyToggle variant="icon" id="receivables-privacy-toggle" />
           </div>
-          <p className="section-description">
+          <p className="section-subtitle section-description">
             Track money lent to friends, family, or counterparties. Lending converts cash into a receivable asset without reducing wealth.
           </p>
         </div>
@@ -225,12 +225,12 @@ export const ReceivablesManager: React.FC<ReceivablesManagerProps> = ({ accounts
           {isFormOpen ? (
             <>
               <X size={16} className="btn-icon-svg" />
-              <span>✕ Cancel</span>
+              <span>Cancel</span>
             </>
           ) : (
             <>
               <Plus size={16} className="btn-icon-svg" />
-              <span>+ Lend Money / Add Receivable</span>
+              <span>Lend Money / Add Receivable</span>
             </>
           )}
         </button>
@@ -293,6 +293,7 @@ export const ReceivablesManager: React.FC<ReceivablesManagerProps> = ({ accounts
               <label htmlFor="rec-source-account">Funded From Account (Optional)</label>
               <select
                 id="rec-source-account"
+                className="form-select"
                 value={sourceAccountId}
                 onChange={(e) => setSourceAccountId(e.target.value)}
               >
@@ -433,11 +434,12 @@ export const ReceivablesManager: React.FC<ReceivablesManagerProps> = ({ accounts
                     </button>
                     <button
                       type="button"
-                      className="btn-sm btn-danger"
+                      className="btn-action btn-action--danger"
                       onClick={() => handleDelete(rec.id, rec.counterparty)}
                       title="Delete receivable"
+                      aria-label="Delete receivable"
                     >
-                      🗑
+                      <Trash2 size={13} />
                     </button>
                   </div>
                 </div>
@@ -518,6 +520,7 @@ export const ReceivablesManager: React.FC<ReceivablesManagerProps> = ({ accounts
                 <label htmlFor="pay-target-account">Deposit Repayment Into Account *</label>
                 <select
                   id="pay-target-account"
+                  className="form-select"
                   required
                   value={targetAccountId}
                   onChange={(e) => setTargetAccountId(e.target.value)}

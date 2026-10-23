@@ -9,8 +9,9 @@ import {
   type CreateBudgetInput,
 } from '../api/budgets';
 import { listCategories, type Category } from '../api/categories';
+import { listAllocations, type AllocationSummary } from '../api/allocations';
 import { formatRupiah, formatNumberIDR, parseRupiahToCents, formatCurrencyInput } from '../utils/currency';
-import { Plus } from 'lucide-react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 
 /** Format IDR amount */
 function fmtIDR(amount: number): string {
@@ -19,6 +20,7 @@ function fmtIDR(amount: number): string {
 
 export const BudgetManager: React.FC = () => {
   const [cycleSummary, setCycleSummary] = useState<CycleSummary | null>(null);
+  const [allocationSummary, setAllocationSummary] = useState<AllocationSummary | null>(null);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,8 +42,14 @@ export const BudgetManager: React.FC = () => {
       setCycleSummary(summary);
       setCategories(cats);
 
-      const bList = await listBudgets(summary.cycle.start_date, summary.cycle.end_date);
+      const [bList, allocData] = await Promise.all([
+        listBudgets(summary.cycle.start_date, summary.cycle.end_date),
+        listAllocations(summary.cycle.start_date, summary.cycle.end_date).catch(() => null),
+      ]);
       setBudgets(bList);
+      if (allocData) {
+        setAllocationSummary(allocData);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load budget data');
     } finally {
@@ -59,12 +67,40 @@ export const BudgetManager: React.FC = () => {
   const budgetedCategoryIDs = new Set(budgets.map((b) => b.category_id));
   const availableCategories = expenseCategories.filter((c) => !budgetedCategoryIDs.has(c.id));
 
+  // Compute Buying Power & Savings Intelligence
+  const cycleIncome = allocationSummary?.total_income ?? cycleSummary?.total_income ?? 0;
+  const totalAllocated = allocationSummary?.total_allocated ?? 0;
+  // Buying Power = Income - Upfront Allocation
+  const budgetBuyingPower = Math.max(0, cycleIncome - totalAllocated);
+  const totalPlanned = budgets.reduce((sum, b) => sum + b.planned_amount, 0);
+  const totalActual = budgets.reduce((sum, b) => sum + b.actual_amount, 0);
+  const totalVariance = totalPlanned - totalActual;
+  // Sisa Buying Power setelah Budget Planned dihitung sebagai Projected Cycle Savings
+  const projectedCycleSavings = budgetBuyingPower > totalPlanned ? budgetBuyingPower - totalPlanned : 0;
+  const totalCycleSavings = totalAllocated + projectedCycleSavings;
+  const isOverBuyingPower = cycleIncome > 0 && totalPlanned > budgetBuyingPower;
+
   const resetForm = () => {
     setShowForm(false);
     setEditingBudget(null);
     setSelectedCategoryID('');
     setPlannedAmount('');
     setFormError('');
+  };
+
+  const handleOpenAddForm = () => {
+    setError('');
+    setFormError('');
+    if (expenseCategories.length === 0) {
+      setError('Belum ada kategori bertipe EXPENSE. Silakan buat kategori EXPENSE terlebih dahulu di menu Categories.');
+      return;
+    }
+    if (availableCategories.length === 0) {
+      setError('Semua kategori pengeluaran sudah memiliki anggaran pada siklus ini. Anda dapat mengedit anggaran yang sudah ada.');
+      return;
+    }
+    resetForm();
+    setShowForm(true);
   };
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -143,16 +179,11 @@ export const BudgetManager: React.FC = () => {
     setFormError('');
   };
 
-  // Compute totals
-  const totalPlanned = budgets.reduce((sum, b) => sum + b.planned_amount, 0);
-  const totalActual = budgets.reduce((sum, b) => sum + b.actual_amount, 0);
-  const totalVariance = totalPlanned - totalActual;
-
   if (loading) {
     return (
       <section className="manager-card" id="budget-manager">
         <div className="manager-card__header">
-          <h2 className="manager-card__title">📊 Budget</h2>
+          <h2 className="section-title manager-card__title">📊 Budget</h2>
         </div>
         <div className="health-loading">
           <div className="spinner" />
@@ -166,20 +197,20 @@ export const BudgetManager: React.FC = () => {
     <section className="manager-card" id="budget-manager">
       <div className="manager-card__header">
         <div>
-          <h2 className="manager-card__title">📊 Budget</h2>
-          <p className="manager-card__subtitle">
+          <h2 className="section-title manager-card__title">📊 Budget</h2>
+          <p className="section-subtitle manager-card__subtitle">
             Set spending limits by category to control cycle expenses and prevent budget overruns.
           </p>
         </div>
         {!showForm && (
           <button
             className="btn btn--primary btn-action-add btn--sm"
-            onClick={() => { resetForm(); setShowForm(true); }}
-            disabled={availableCategories.length === 0}
+            onClick={handleOpenAddForm}
             id="budget-add-btn"
+            type="button"
           >
             <Plus size={16} className="btn-icon-svg" />
-            <span>+ Add Budget</span>
+            <span>Add Budget</span>
           </button>
         )}
       </div>
@@ -190,25 +221,41 @@ export const BudgetManager: React.FC = () => {
         </div>
       )}
 
-      {/* Summary bar */}
-      {budgets.length > 0 && (
-        <div className="budget-summary-bar" id="budget-summary">
-          <div className="budget-summary-chip">
-            <span className="budget-summary-chip__label">Total Planned</span>
-            <span className="budget-summary-chip__value">{fmtIDR(totalPlanned)}</span>
-          </div>
-          <div className="budget-summary-chip">
-            <span className="budget-summary-chip__label">Total Actual</span>
-            <span className="budget-summary-chip__value">{fmtIDR(totalActual)}</span>
-          </div>
-          <div className={`budget-summary-chip ${totalVariance < 0 ? 'budget-summary-chip--over' : 'budget-summary-chip--under'}`}>
-            <span className="budget-summary-chip__label">Variance</span>
-            <span className="budget-summary-chip__value">
-              {totalVariance >= 0 ? '+' : ''}{fmtIDR(totalVariance)}
-            </span>
-          </div>
+      {isOverBuyingPower && (
+        <div className="auth-alert auth-alert--error" style={{ marginBottom: '1rem' }}>
+          <span>⚠️ Perhatian: Total anggaran ({fmtIDR(totalPlanned)}) melebihi buying power yang tersedia ({fmtIDR(budgetBuyingPower)}).</span>
         </div>
       )}
+
+      {/* Summary bar */}
+      <div className="budget-summary-bar" id="budget-summary">
+        <div className="budget-summary-chip">
+          <span className="budget-summary-chip__label">Buying Power</span>
+          <span className="budget-summary-chip__value text-accent">{fmtIDR(budgetBuyingPower)}</span>
+        </div>
+        <div className="budget-summary-chip">
+          <span className="budget-summary-chip__label">Total Planned</span>
+          <span className="budget-summary-chip__value">{fmtIDR(totalPlanned)}</span>
+        </div>
+        <div className="budget-summary-chip">
+          <span className="budget-summary-chip__label">Total Actual</span>
+          <span className="budget-summary-chip__value">{fmtIDR(totalActual)}</span>
+        </div>
+        <div className={`budget-summary-chip ${totalVariance < 0 ? 'budget-summary-chip--over' : 'budget-summary-chip--under'}`}>
+          <span className="budget-summary-chip__label">Variance</span>
+          <span className="budget-summary-chip__value">
+            {totalVariance >= 0 ? '+' : ''}{fmtIDR(totalVariance)}
+          </span>
+        </div>
+        <div className="budget-summary-chip">
+          <span className="budget-summary-chip__label">Projected Savings</span>
+          <span className="budget-summary-chip__value text-success">+{fmtIDR(projectedCycleSavings)}</span>
+        </div>
+        <div className="budget-summary-chip">
+          <span className="budget-summary-chip__label">Total Cycle Savings</span>
+          <span className="budget-summary-chip__value text-success">+{fmtIDR(totalCycleSavings)}</span>
+        </div>
+      </div>
 
       {/* Create / Edit Form */}
       {showForm && (
@@ -232,6 +279,7 @@ export const BudgetManager: React.FC = () => {
               <label htmlFor="budget-category">Category</label>
               <select
                 id="budget-category"
+                className="form-select"
                 value={selectedCategoryID}
                 onChange={(e) => setSelectedCategoryID(e.target.value)}
                 required
@@ -301,18 +349,20 @@ export const BudgetManager: React.FC = () => {
                   </span>
                   <div className="budget-card__actions">
                     <button
-                      className="btn-icon"
+                      className="btn-action btn-action--edit"
                       onClick={() => startEdit(b)}
                       title="Edit budget"
+                      aria-label="Edit budget"
                     >
-                      ✏️
+                      <Pencil size={13} />
                     </button>
                     <button
-                      className="btn-icon"
+                      className="btn-action btn-action--danger"
                       onClick={() => handleDelete(b.id)}
                       title="Remove budget"
+                      aria-label="Remove budget"
                     >
-                      🗑️
+                      <Trash2 size={13} />
                     </button>
                   </div>
                 </div>

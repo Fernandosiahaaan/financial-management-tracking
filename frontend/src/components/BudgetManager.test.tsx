@@ -124,7 +124,7 @@ describe('BudgetManager Component', () => {
       expect(screen.getByText(/No budgets set for this cycle yet/i)).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /\+ Add Budget/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Add Budget/i }));
 
     const categorySelect = screen.getByLabelText(/Category/i);
     const amountInput = screen.getByLabelText(/Planned Amount/i);

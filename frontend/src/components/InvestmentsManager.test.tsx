@@ -79,8 +79,8 @@ describe('InvestmentsManager Component', () => {
 
     render(<InvestmentsManager accounts={mockAccounts} />);
 
-    fireEvent.click(screen.getByText('+ Add Investment Holding'));
-    expect(screen.getByText('Add Investment Holding')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Add Investment Holding/i }));
+    expect(screen.getByRole('heading', { name: 'Add Investment Holding' })).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText(/Holding Name/i), {
       target: { value: 'Antam 10g' },
