@@ -11,6 +11,7 @@ import {
 } from '../api/allocations';
 import { listCategories, type Category } from '../api/categories';
 import { formatRupiah, formatNumberIDR, parseRupiahToCents, formatCurrencyInput } from '../utils/currency';
+import { Plus } from 'lucide-react';
 
 /** Format IDR amount */
 function fmtIDR(amount: number): string {
@@ -187,13 +188,14 @@ export const AllocationManager: React.FC = () => {
         </div>
         {!showForm && (
           <button
-            className="btn btn--primary btn--sm"
+            className="btn btn--primary btn-action-add btn--sm"
             onClick={() => { resetForm(); setShowForm(true); }}
             disabled={availableCategories.length === 0 || remainingIncome <= 0}
             id="allocation-add-btn"
             title={remainingIncome <= 0 ? 'No unallocated income remaining' : 'Add allocation'}
           >
-            + Add Allocation
+            <Plus size={16} className="btn-icon-svg" />
+            <span>+ Add Allocation</span>
           </button>
         )}
       </div>

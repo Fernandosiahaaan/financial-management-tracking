@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import * as categoriesApi from '../api/categories';
 import type { Category, CategoryType } from '../api/categories';
+import { Plus } from 'lucide-react';
 
 const AVAILABLE_ICONS = ['tag', 'shopping-cart', 'utensils', 'car', 'home', 'film', 'zap', 'briefcase', 'wallet', 'gift', 'heart', 'book'];
 const AVAILABLE_COLORS = ['#6366F1', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#14B8A6'];
@@ -130,11 +131,12 @@ export const CategoriesManager: React.FC = () => {
           </p>
         </div>
         <button
-          className="btn btn--primary"
+          className="btn btn--primary btn-action-add"
           id="btn-add-category"
           onClick={handleOpenCreate}
         >
-          + Add Category
+          <Plus size={16} className="btn-icon-svg" />
+          <span>+ Add Category</span>
         </button>
       </div>
 

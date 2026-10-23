@@ -10,6 +10,7 @@ import {
 } from '../api/budgets';
 import { listCategories, type Category } from '../api/categories';
 import { formatRupiah, formatNumberIDR, parseRupiahToCents, formatCurrencyInput } from '../utils/currency';
+import { Plus } from 'lucide-react';
 
 /** Format IDR amount */
 function fmtIDR(amount: number): string {
@@ -164,15 +165,21 @@ export const BudgetManager: React.FC = () => {
   return (
     <section className="manager-card" id="budget-manager">
       <div className="manager-card__header">
-        <h2 className="manager-card__title">📊 Budget</h2>
+        <div>
+          <h2 className="manager-card__title">📊 Budget</h2>
+          <p className="manager-card__subtitle">
+            Set spending limits by category to control cycle expenses and prevent budget overruns.
+          </p>
+        </div>
         {!showForm && (
           <button
-            className="btn btn--primary btn--sm"
+            className="btn btn--primary btn-action-add btn--sm"
             onClick={() => { resetForm(); setShowForm(true); }}
             disabled={availableCategories.length === 0}
             id="budget-add-btn"
           >
-            + Add Budget
+            <Plus size={16} className="btn-icon-svg" />
+            <span>+ Add Budget</span>
           </button>
         )}
       </div>

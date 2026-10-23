@@ -12,6 +12,7 @@ import { type Category, listCategories } from '../api/categories';
 import { formatRupiah, formatNumberIDR, parseRupiahToCents, formatCurrencyInput } from '../utils/currency';
 import { usePrivacy } from '../context/PrivacyContext';
 import { PrivacyToggle } from './PrivacyToggle';
+import { Plus } from 'lucide-react';
 
 interface TransactionsManagerProps {
   onBalanceChange?: () => void;
@@ -318,8 +319,14 @@ export const TransactionsManager: React.FC<TransactionsManagerProps> = ({ onBala
           </button>
         </div>
 
-        <button onClick={handleOpenCreateModal} className="btn-record-tx" type="button">
-          + Record Transaction
+        <button
+          onClick={handleOpenCreateModal}
+          className="btn btn--primary btn-action-add btn-record-tx"
+          type="button"
+          id="btn-record-transaction"
+        >
+          <Plus size={16} className="btn-icon-svg" />
+          <span>+ Record Transaction</span>
         </button>
       </div>
 

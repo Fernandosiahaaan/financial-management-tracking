@@ -284,10 +284,10 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
               <p>No budgets configured for this cycle.</p>
               {onNavigateTab && (
                 <button
-                  className="btn btn--primary btn--sm"
+                  className="btn btn--primary btn-action-add btn--sm"
                   onClick={() => onNavigateTab('budgets')}
                 >
-                  <PlusCircle size={15} />
+                  <PlusCircle size={15} className="btn-icon-svg" />
                   <span>+ Add First Budget</span>
                 </button>
               )}
@@ -391,10 +391,10 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
               <p>No active accounts configured.</p>
               {onNavigateTab && (
                 <button
-                  className="btn btn--primary btn--sm"
+                  className="btn btn--primary btn-action-add btn--sm"
                   onClick={() => onNavigateTab('accounts')}
                 >
-                  <PlusCircle size={15} />
+                  <PlusCircle size={15} className="btn-icon-svg" />
                   <span>+ Add First Account</span>
                 </button>
               )}

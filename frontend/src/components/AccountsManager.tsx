@@ -4,6 +4,7 @@ import type { Account, AccountType, AccountStatus } from '../api/accounts';
 import { formatNumberIDR, parseRupiahToCents, formatCurrencyInput } from '../utils/currency';
 import { usePrivacy } from '../context/PrivacyContext';
 import { PrivacyToggle } from './PrivacyToggle';
+import { Plus } from 'lucide-react';
 
 export const AccountsManager: React.FC = () => {
   const { formatAmount } = usePrivacy();
@@ -141,11 +142,12 @@ export const AccountsManager: React.FC = () => {
           </p>
         </div>
         <button
-          className="btn btn--primary"
+          className="btn btn--primary btn-action-add"
           id="btn-add-account"
           onClick={handleOpenCreate}
         >
-          + Add Account
+          <Plus size={16} className="btn-icon-svg" />
+          <span>+ Add Account</span>
         </button>
       </div>
 

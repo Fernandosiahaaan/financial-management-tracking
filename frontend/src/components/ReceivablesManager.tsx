@@ -12,6 +12,7 @@ import type { Account } from '../api/accounts';
 import { formatRupiah, formatNumberIDR, parseRupiahToCents, formatCurrencyInput } from '../utils/currency';
 import { usePrivacy } from '../context/PrivacyContext';
 import { PrivacyToggle } from './PrivacyToggle';
+import { Plus, X } from 'lucide-react';
 
 interface ReceivablesManagerProps {
   accounts: Account[];
@@ -216,11 +217,22 @@ export const ReceivablesManager: React.FC<ReceivablesManagerProps> = ({ accounts
         </div>
         <button
           type="button"
-          className="btn-primary"
+          className="btn btn--primary btn-action-add"
+          id="btn-add-receivable"
           onClick={() => setIsFormOpen(!isFormOpen)}
           aria-expanded={isFormOpen}
         >
-          {isFormOpen ? '✕ Cancel' : '+ Lend Money / Add Receivable'}
+          {isFormOpen ? (
+            <>
+              <X size={16} className="btn-icon-svg" />
+              <span>✕ Cancel</span>
+            </>
+          ) : (
+            <>
+              <Plus size={16} className="btn-icon-svg" />
+              <span>+ Lend Money / Add Receivable</span>
+            </>
+          )}
         </button>
       </div>
 

@@ -32,7 +32,6 @@ import {
   Menu,
   X,
   Sparkles,
-  Activity,
   Wallet,
 } from 'lucide-react';
 
@@ -313,7 +312,7 @@ export const DashboardView: React.FC = () => {
               className={`top-bar-health-pill ${
                 health?.status === 'healthy' ? 'top-bar-health-pill--healthy' : 'top-bar-health-pill--warning'
               }`}
-              title={`API: ${health?.status || 'checking'}, DB: ${health?.database || 'checking'}`}
+              title={healthError ? `Error: ${healthError}` : `API: ${health?.status || 'checking'}, DB: ${health?.database || 'checking'}`}
             >
               <span className="health-pulse-dot" />
               <span className="health-status-text">
@@ -332,9 +331,7 @@ export const DashboardView: React.FC = () => {
 
           {activeTab === 'overview' && (
             <>
-              <DashboardOverview onNavigateTab={(tab) => handleNavClick(tab as ActiveNavTab)} />
-
-              {/* Profile & Cycle Information */}
+              {/* Profile & Cycle Welcome Banner at the very top */}
               <section className="profile-banner">
                 <div className="profile-banner__glow" />
                 <div className="profile-banner__header">
@@ -359,68 +356,7 @@ export const DashboardView: React.FC = () => {
                 </div>
               </section>
 
-              {/* User Settings */}
-              <UserSettingsCard />
-
-              {/* System Health Status */}
-              <section className="health-card" id="system-health-card">
-                <div className="health-card__top">
-                  <div className="health-card__title-wrap">
-                    <Activity size={18} className="health-card__icon" />
-                    <h3 className="health-card__title">⚡ Backend & Database Health</h3>
-                  </div>
-                  <button
-                    className="btn btn--secondary btn--sm btn-refresh"
-                    onClick={loadHealth}
-                    disabled={healthLoading}
-                    title="Refresh health status"
-                  >
-                    🔄 Refresh
-                  </button>
-                </div>
-
-                {healthLoading && (
-                  <div className="health-loading">
-                    <div className="spinner" />
-                    <span>Verifying service connectivity…</span>
-                  </div>
-                )}
-
-                {healthError && (
-                  <div className="auth-alert auth-alert--error">
-                    <span>⚠️ {healthError}</span>
-                  </div>
-                )}
-
-                {!healthLoading && !healthError && health && (
-                  <div className="health-card__rows">
-                    <div className="health-row">
-                      <span className="health-row__label">API Status</span>
-                      <span className="health-row__value">
-                        <span className={`status-badge status-badge--${health.status}`}>
-                          <span className="status-badge__dot" />
-                          {health.status}
-                        </span>
-                      </span>
-                    </div>
-                    <div className="health-row">
-                      <span className="health-row__label">PostgreSQL</span>
-                      <span className="health-row__value">
-                        <span
-                          className={`status-badge ${
-                            health.database === 'connected'
-                              ? 'status-badge--healthy'
-                              : 'status-badge--unhealthy'
-                          }`}
-                        >
-                          <span className="status-badge__dot" />
-                          {health.database}
-                        </span>
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </section>
+              <DashboardOverview onNavigateTab={(tab) => handleNavClick(tab as ActiveNavTab)} />
             </>
           )}
 

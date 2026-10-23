@@ -12,6 +12,7 @@ import type { Account } from '../api/accounts';
 import { formatRupiah, formatNumberIDR, parseRupiahToCents, formatCurrencyInput } from '../utils/currency';
 import { usePrivacy } from '../context/PrivacyContext';
 import { PrivacyToggle } from './PrivacyToggle';
+import { Plus, X } from 'lucide-react';
 
 interface InvestmentsManagerProps {
   accounts: Account[];
@@ -191,11 +192,22 @@ export const InvestmentsManager: React.FC<InvestmentsManagerProps> = ({ accounts
         </div>
         <button
           type="button"
-          className="btn-primary"
+          className="btn btn--primary btn-action-add"
+          id="btn-add-investment-holding"
           onClick={() => setIsFormOpen(!isFormOpen)}
           aria-expanded={isFormOpen}
         >
-          {isFormOpen ? '✕ Cancel' : '+ Add Investment Holding'}
+          {isFormOpen ? (
+            <>
+              <X size={16} className="btn-icon-svg" />
+              <span>✕ Cancel</span>
+            </>
+          ) : (
+            <>
+              <Plus size={16} className="btn-icon-svg" />
+              <span>+ Add Investment Holding</span>
+            </>
+          )}
         </button>
       </div>
 
