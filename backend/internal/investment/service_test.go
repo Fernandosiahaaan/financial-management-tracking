@@ -97,6 +97,11 @@ func (m *mockRepository) GetTotalInvestmentsValue(_ context.Context, _ uuid.UUID
 	return m.totalValue, nil
 }
 
+func (m *mockRepository) GetValuationHistory(_ context.Context, _ uuid.UUID, _ *uuid.UUID) ([]ValuationHistoryPoint, error) {
+	return []ValuationHistoryPoint{}, nil
+}
+
+
 func TestInvestmentService_Create(t *testing.T) {
 	repo := &mockRepository{}
 	svc := NewService(repo)
@@ -222,3 +227,18 @@ func TestInvestmentService_UpdateValuation(t *testing.T) {
 		t.Errorf("unexpected updated investment: %+v", updated)
 	}
 }
+
+func TestInvestmentService_GetValuationHistory(t *testing.T) {
+	repo := &mockRepository{}
+	svc := NewService(repo)
+	userID := uuid.New()
+
+	history, err := svc.GetValuationHistory(context.Background(), userID, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if history == nil {
+		t.Fatal("expected non-nil history slice")
+	}
+}
+

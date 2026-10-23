@@ -45,13 +45,14 @@ describe('InvestmentsManager Component', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.spyOn(investmentsApi, 'listInvestments').mockResolvedValue(mockPortfolio);
+    vi.spyOn(investmentsApi, 'fetchValuationHistory').mockResolvedValue([]);
   });
 
   it('renders portfolio summary and holding cards', async () => {
     render(<InvestmentsManager accounts={mockAccounts} />);
 
     await waitFor(() => {
-      expect(screen.getByText('BBCA - Bank Central Asia')).toBeInTheDocument();
+      expect(screen.getAllByText('BBCA - Bank Central Asia').length).toBeGreaterThan(0);
     });
 
     expect(screen.getByText('Total Current Valuation')).toBeInTheDocument();

@@ -94,3 +94,43 @@ export async function fetchCycleReport(date?: string): Promise<ReportData> {
   }
   return json.data;
 }
+
+export interface SavingsTrendPoint {
+  period: string;
+  start_date: string;
+  end_date: string;
+  label: string;
+  income: number;
+  formatted_income: string;
+  expense: number;
+  formatted_expense: string;
+  net_savings: number;
+  formatted_net_savings: string;
+  saving_rate: number;
+  change_amount: number;
+  formatted_change_amount: string;
+  change_percentage: number;
+  status: 'INCREASED' | 'DECREASED' | 'STABLE';
+}
+
+export interface SavingsTrendResponse {
+  cycles: SavingsTrendPoint[];
+  average_savings: number;
+  formatted_average_savings: string;
+  highest_savings: number;
+  formatted_highest_savings: string;
+  lowest_savings: number;
+  formatted_lowest_savings: string;
+  current_vs_previous_diff: number;
+  current_status: 'INCREASED' | 'DECREASED' | 'STABLE';
+}
+
+export async function fetchSavingsTrend(numCycles: number = 6): Promise<SavingsTrendResponse> {
+  const res = await authFetch(`/api/v1/reports/savings-trend?num_cycles=${numCycles}`);
+  const json = await res.json();
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || 'Failed to fetch savings trend');
+  }
+  return json.data;
+}
+

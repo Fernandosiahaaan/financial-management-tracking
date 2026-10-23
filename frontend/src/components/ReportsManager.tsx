@@ -7,10 +7,11 @@ import {
 import { formatRupiah } from '../utils/currency';
 import { usePrivacy } from '../context/PrivacyContext';
 import { PrivacyToggle } from './PrivacyToggle';
+import { SavingsCycleChart } from './SavingsCycleChart';
 
 export const ReportsManager: React.FC = () => {
   const { formatAmount } = usePrivacy();
-  const [reportType, setReportType] = useState<'monthly' | 'cycle'>('monthly');
+  const [reportType, setReportType] = useState<'monthly' | 'cycle' | 'savings_trend'>('monthly');
 
   // Month selector defaults to current month (YYYY-MM)
   const now = new Date();
@@ -29,6 +30,10 @@ export const ReportsManager: React.FC = () => {
   const [copySuccess, setCopySuccess] = useState<boolean>(false);
 
   const loadReport = useCallback(async () => {
+    if (reportType === 'savings_trend') {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError('');
     try {
@@ -103,62 +108,82 @@ export const ReportsManager: React.FC = () => {
             >
               🔄 Cycle Report
             </button>
+            <button
+              type="button"
+              id="report-tab-savings-trend"
+              data-testid="report-tab-savings-trend"
+              role="tab"
+              aria-selected={reportType === 'savings_trend'}
+              className={`segmented-btn ${reportType === 'savings_trend' ? 'segmented-btn--active' : ''}`}
+              onClick={() => setReportType('savings_trend')}
+            >
+              📈 Tren Tabungan
+            </button>
           </div>
 
-          <button
-            id="report-export-json-btn"
-            className="btn btn--outline btn--sm"
-            onClick={() => setShowJsonModal(true)}
-            disabled={!report || loading}
-          >
-            ⬇️ View JSON
-          </button>
+          {reportType !== 'savings_trend' && (
+            <button
+              id="report-export-json-btn"
+              className="btn btn--outline btn--sm"
+              onClick={() => setShowJsonModal(true)}
+              disabled={!report || loading}
+            >
+              ⬇️ View JSON
+            </button>
+          )}
         </div>
       </div>
 
       {/* Date Filter Bar */}
-      <div className="reports-filter-bar card">
-        <div className="filter-group">
-          {reportType === 'monthly' ? (
-            <>
-              <label htmlFor="report-month-input" className="form-label">
-                Select Calendar Month
-              </label>
-              <input
-                id="report-month-input"
-                type="month"
-                className="form-input"
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                min="2000-01"
-                max="2100-12"
-              />
-            </>
-          ) : (
-            <>
-              <label htmlFor="report-cycle-date-input" className="form-label">
-                Select Date in Cycle
-              </label>
-              <input
-                id="report-cycle-date-input"
-                type="date"
-                className="form-input"
-                value={selectedCycleDate}
-                onChange={(e) => setSelectedCycleDate(e.target.value)}
-              />
-            </>
-          )}
-        </div>
+      {reportType !== 'savings_trend' && (
+        <div className="reports-filter-bar card">
+          <div className="filter-group">
+            {reportType === 'monthly' ? (
+              <>
+                <label htmlFor="report-month-input" className="form-label">
+                  Select Calendar Month
+                </label>
+                <input
+                  id="report-month-input"
+                  type="month"
+                  className="form-input"
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  min="2000-01"
+                  max="2100-12"
+                />
+              </>
+            ) : (
+              <>
+                <label htmlFor="report-cycle-date-input" className="form-label">
+                  Select Date in Cycle
+                </label>
+                <input
+                  id="report-cycle-date-input"
+                  type="date"
+                  className="form-input"
+                  value={selectedCycleDate}
+                  onChange={(e) => setSelectedCycleDate(e.target.value)}
+                />
+              </>
+            )}
+          </div>
 
-        <button
-          id="report-generate-btn"
-          className="btn btn--primary"
-          onClick={loadReport}
-          disabled={loading}
-        >
-          {loading ? 'Generating…' : '🔄 Refresh Report'}
-        </button>
-      </div>
+          <button
+            id="report-generate-btn"
+            className="btn btn--primary"
+            onClick={loadReport}
+            disabled={loading}
+          >
+            {loading ? 'Generating…' : '🔄 Refresh Report'}
+          </button>
+        </div>
+      )}
+
+      {/* Savings Trend Chart Dedicated Tab View */}
+      {reportType === 'savings_trend' && (
+        <SavingsCycleChart />
+      )}
 
       {/* Error state */}
       {error && (
@@ -246,6 +271,13 @@ export const ReportsManager: React.FC = () => {
               </div>
             </div>
           </section>
+
+          {/* Trend Analysis for Cycle Report */}
+          {reportType === 'cycle' && (
+            <div style={{ margin: '1.5rem 0' }}>
+              <SavingsCycleChart initialCycles={6} />
+            </div>
+          )}
 
           {/* 2. Budget vs Actual Comparison */}
           <section className="report-section">

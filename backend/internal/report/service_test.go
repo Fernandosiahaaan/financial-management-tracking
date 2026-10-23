@@ -256,3 +256,39 @@ func TestGenerateCycleReport_InvalidDate(t *testing.T) {
 		t.Errorf("expected ErrInvalidDateFormat, got %v", err)
 	}
 }
+
+func TestGetSavingsTrend(t *testing.T) {
+	ctx := context.Background()
+	userID := uuid.New()
+	mock := &mockRepo{
+		startDay: 25,
+		income:   10000000,
+		expense:  6000000,
+	}
+
+	svc := report.NewService(mock)
+	trend, err := svc.GetSavingsTrend(ctx, userID, 4)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(trend.Cycles) != 4 {
+		t.Fatalf("expected 4 points, got %d", len(trend.Cycles))
+	}
+
+	for _, pt := range trend.Cycles {
+		if pt.Income != 10000000 {
+			t.Errorf("expected income 10000000, got %d", pt.Income)
+		}
+		if pt.Expense != 6000000 {
+			t.Errorf("expected expense 6000000, got %d", pt.Expense)
+		}
+		if pt.NetSavings != 4000000 {
+			t.Errorf("expected net savings 4000000, got %d", pt.NetSavings)
+		}
+	}
+
+	if trend.AverageSavings != 4000000 {
+		t.Errorf("expected average savings 4000000, got %d", trend.AverageSavings)
+	}
+}

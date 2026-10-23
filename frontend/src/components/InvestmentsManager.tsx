@@ -13,6 +13,7 @@ import { formatRupiah, formatNumberIDR, parseRupiahToCents, formatCurrencyInput 
 import { usePrivacy } from '../context/PrivacyContext';
 import { PrivacyToggle } from './PrivacyToggle';
 import { Plus, X, Pencil, Trash2 } from 'lucide-react';
+import { InvestmentValuationChart } from './InvestmentValuationChart';
 
 interface InvestmentsManagerProps {
   accounts: Account[];
@@ -353,6 +354,9 @@ export const InvestmentsManager: React.FC<InvestmentsManagerProps> = ({ accounts
           </div>
         </form>
       )}
+
+      {/* Investment Valuation & Performance Chart */}
+      <InvestmentValuationChart investments={portfolio.investments} onRefresh={fetchPortfolio} />
 
       {/* Filter Tabs */}
       <div className="filter-tabs">

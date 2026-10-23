@@ -138,4 +138,48 @@ describe('ReportsManager Component', () => {
 
     expect(screen.getByRole('button', { name: /Retry/i })).toBeInTheDocument();
   });
+
+  it('switches to savings trend tab and renders trend chart', async () => {
+    vi.spyOn(reportsApi, 'fetchMonthlyReport').mockResolvedValue(mockReport);
+    vi.spyOn(reportsApi, 'fetchSavingsTrend').mockResolvedValue({
+      cycles: [
+        {
+          period: '2026-08-25 to 2026-09-24',
+          start_date: '2026-08-25',
+          end_date: '2026-09-24',
+          label: 'Siklus Sep 2026',
+          income: 10000000,
+          formatted_income: 'Rp 10.000.000,00',
+          expense: 6000000,
+          formatted_expense: 'Rp 6.000.000,00',
+          net_savings: 4000000,
+          formatted_net_savings: 'Rp 4.000.000,00',
+          saving_rate: 40,
+          change_amount: 500000,
+          formatted_change_amount: 'Rp 500.000,00',
+          change_percentage: 14.3,
+          status: 'INCREASED',
+        },
+      ],
+      average_savings: 4000000,
+      formatted_average_savings: 'Rp 4.000.000,00',
+      highest_savings: 4000000,
+      formatted_highest_savings: 'Rp 4.000.000,00',
+      lowest_savings: 4000000,
+      formatted_lowest_savings: 'Rp 4.000.000,00',
+      current_vs_previous_diff: 500000,
+      current_status: 'INCREASED',
+    });
+
+    render(<ReportsManager />);
+
+    const trendTab = screen.getByTestId('report-tab-savings-trend');
+    fireEvent.click(trendTab);
+
+    await waitFor(() => {
+      expect(screen.getByText('Tren Tabungan Antar Siklus')).toBeInTheDocument();
+      expect(screen.getByText('Performa Siklus Terakhir')).toBeInTheDocument();
+    });
+  });
 });
+

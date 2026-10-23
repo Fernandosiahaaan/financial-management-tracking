@@ -85,6 +85,22 @@ type ListFilter struct {
 	Type *Type `json:"type,omitempty"`
 }
 
+// ValuationHistoryPoint represents a point in time when an investment's valuation was recorded or updated.
+type ValuationHistoryPoint struct {
+	ID                 uuid.UUID `json:"id"`
+	InvestmentID       uuid.UUID `json:"investment_id"`
+	InvestmentName     string    `json:"investment_name,omitempty"`
+	InvestmentType     Type      `json:"investment_type,omitempty"`
+	Valuation          int64     `json:"valuation"`
+	FormattedValuation string    `json:"formatted_valuation,omitempty"`
+	CapitalAtRecord    int64     `json:"capital_at_record,omitempty"`
+	GainLoss           int64     `json:"gain_loss"`
+	FormattedGainLoss  string    `json:"formatted_gain_loss,omitempty"`
+	GainLossPercentage float64   `json:"gain_loss_percentage"`
+	Notes              string    `json:"notes"`
+	CreatedAt          time.Time `json:"created_at"`
+}
+
 var (
 	ErrInvalidType         = errors.New("invalid investment type: must be STOCK, MUTUAL_FUND, GOLD, CRYPTO, or OTHER")
 	ErrInvalidName         = errors.New("investment name is required")

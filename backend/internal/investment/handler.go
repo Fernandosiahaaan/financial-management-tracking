@@ -26,7 +26,9 @@ func (h *Handler) Routes() chi.Router {
 
 	r.Post("/", h.Create)
 	r.Get("/", h.List)
+	r.Get("/history", h.GetValuationHistory)
 	r.Get("/{id}", h.GetByID)
+	r.Get("/{id}/history", h.GetValuationHistoryByID)
 	r.Put("/{id}", h.UpdateValuation)
 	r.Patch("/{id}", h.UpdateValuation)
 	r.Delete("/{id}", h.Delete)
@@ -190,6 +192,47 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 		"success": true,
 		"message": "investment deleted successfully",
 	})
+}
+
+// GetValuationHistory returns portfolio-wide valuation history points.
+func (h *Handler) GetValuationHistory(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.GetUserID(r.Context())
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	points, err := h.service.GetValuationHistory(r.Context(), userID, nil)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "failed to get valuation history")
+		return
+	}
+
+	respondJSON(w, http.StatusOK, points)
+}
+
+// GetValuationHistoryByID returns valuation history points for a specific investment holding.
+func (h *Handler) GetValuationHistoryByID(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.GetUserID(r.Context())
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	idStr := chi.URLParam(r, "id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "invalid investment id")
+		return
+	}
+
+	points, err := h.service.GetValuationHistory(r.Context(), userID, &id)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "failed to get valuation history")
+		return
+	}
+
+	respondJSON(w, http.StatusOK, points)
 }
 
 func respondJSON(w http.ResponseWriter, status int, data interface{}) {

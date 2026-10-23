@@ -127,3 +127,30 @@ export async function deleteInvestment(id: string): Promise<void> {
     throw new Error(json.message || 'Failed to delete investment');
   }
 }
+
+export interface ValuationHistoryPoint {
+  id: string;
+  investment_id: string;
+  investment_name: string;
+  investment_type: InvestmentType;
+  valuation: number;
+  formatted_valuation: string;
+  unrealized_gain: number;
+  formatted_unrealized_gain: string;
+  gain_percentage: number;
+  notes?: string;
+  recorded_at: string;
+}
+
+export async function fetchValuationHistory(investmentId?: string): Promise<ValuationHistoryPoint[]> {
+  const url = investmentId
+    ? `/api/v1/investments/${investmentId}/history`
+    : `/api/v1/investments/history`;
+  const res = await authFetch(url);
+  const json = await res.json();
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || 'Failed to fetch valuation history');
+  }
+  return json.data || [];
+}
+

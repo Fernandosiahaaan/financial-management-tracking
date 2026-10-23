@@ -89,3 +89,36 @@ type InvestmentAssetItem struct {
 	Capital      int64     `json:"capital"`
 	CurrentValue int64     `json:"current_value"`
 }
+
+// SavingsTrendPoint represents a cycle's financial figures and savings delta vs previous cycle.
+type SavingsTrendPoint struct {
+	Period                string  `json:"period"`
+	StartDate             string  `json:"start_date"`
+	EndDate               string  `json:"end_date"`
+	Label                 string  `json:"label"`
+	Income                int64   `json:"income"`
+	FormattedIncome       string  `json:"formatted_income"`
+	Expense               int64   `json:"expense"`
+	FormattedExpense      string  `json:"formatted_expense"`
+	NetSavings            int64   `json:"net_savings"`
+	FormattedNetSavings   string  `json:"formatted_net_savings"`
+	SavingRate            float64 `json:"saving_rate"`
+	ChangeAmount          int64   `json:"change_amount"`
+	FormattedChangeAmount string  `json:"formatted_change_amount"`
+	ChangePercentage      float64 `json:"change_percentage"`
+	Status                string  `json:"status"` // "INCREASED", "DECREASED", "STABLE"
+}
+
+// SavingsTrendResponse encapsulates the trend points and summary statistics.
+type SavingsTrendResponse struct {
+	Cycles                []SavingsTrendPoint `json:"cycles"`
+	AverageSavings        int64               `json:"average_savings"`
+	FormattedAvgSavings   string              `json:"formatted_average_savings"`
+	HighestSavings        int64               `json:"highest_savings"`
+	FormattedHighSavings  string              `json:"formatted_highest_savings"`
+	LowestSavings         int64               `json:"lowest_savings"`
+	FormattedLowSavings   string              `json:"formatted_lowest_savings"`
+	CurrentVsPreviousDiff int64               `json:"current_vs_previous_diff"`
+	CurrentStatus         string              `json:"current_status"` // "INCREASED", "DECREASED", "STABLE"
+}
+

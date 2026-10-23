@@ -12,7 +12,7 @@ import { type Category, listCategories } from '../api/categories';
 import { formatRupiah, formatNumberIDR, parseRupiahToCents, formatCurrencyInput } from '../utils/currency';
 import { usePrivacy } from '../context/PrivacyContext';
 import { PrivacyToggle } from './PrivacyToggle';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, ArrowDownRight, ArrowUpRight, ArrowLeftRight } from 'lucide-react';
 
 interface TransactionsManagerProps {
   onBalanceChange?: () => void;
@@ -129,6 +129,16 @@ export const TransactionsManager: React.FC<TransactionsManagerProps> = ({ onBala
     setEditingTx(null);
     setFormError(null);
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isModalOpen) {
+        handleCloseModal();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isModalOpen]);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -444,17 +454,40 @@ export const TransactionsManager: React.FC<TransactionsManagerProps> = ({ onBala
 
       {/* Record/Edit Transaction Modal */}
       {isModalOpen && (
-        <div className="modal-backdrop">
+        <div
+          className="modal-backdrop"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) handleCloseModal();
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-tx-title"
+        >
           <div className="modal-card">
             <div className="modal-header">
-              <h3>{editingTx ? 'Edit Transaction' : 'Record Transaction'}</h3>
-              <button onClick={handleCloseModal} className="btn-close" type="button">
-                &times;
+              <div className="modal-header-title">
+                <span className="modal-icon-badge">
+                  {formType === 'EXPENSE' ? '💸' : formType === 'INCOME' ? '💰' : '🔄'}
+                </span>
+                <h3 id="modal-tx-title">{editingTx ? 'Edit Transaction' : 'Record Transaction'}</h3>
+              </div>
+              <button
+                onClick={handleCloseModal}
+                className="btn-close"
+                type="button"
+                aria-label="Tutup Modal"
+                title="Tutup (Esc)"
+              >
+                <X size={16} />
               </button>
             </div>
 
             <form onSubmit={handleFormSubmit} className="modal-form">
-              {formError && <div className="form-error-banner">{formError}</div>}
+              {formError && (
+                <div className="form-error-banner" role="alert">
+                  {formError}
+                </div>
+              )}
 
               {/* Type Switcher Tabs */}
               <div className="form-type-selector">
@@ -466,7 +499,8 @@ export const TransactionsManager: React.FC<TransactionsManagerProps> = ({ onBala
                     setFormCategoryId('');
                   }}
                 >
-                  Expense
+                  <ArrowDownRight size={15} />
+                  <span>Expense</span>
                 </button>
                 <button
                   type="button"
@@ -476,7 +510,8 @@ export const TransactionsManager: React.FC<TransactionsManagerProps> = ({ onBala
                     setFormCategoryId('');
                   }}
                 >
-                  Income
+                  <ArrowUpRight size={15} />
+                  <span>Income</span>
                 </button>
                 <button
                   type="button"
@@ -486,7 +521,8 @@ export const TransactionsManager: React.FC<TransactionsManagerProps> = ({ onBala
                     setFormCategoryId('');
                   }}
                 >
-                  Transfer
+                  <ArrowLeftRight size={15} />
+                  <span>Transfer</span>
                 </button>
               </div>
 

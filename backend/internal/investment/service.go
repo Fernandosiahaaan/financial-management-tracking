@@ -116,3 +116,9 @@ func (s *Service) SoftDelete(ctx context.Context, userID, id uuid.UUID) error {
 func (s *Service) GetTotalInvestmentsValue(ctx context.Context, userID uuid.UUID) (int64, error) {
 	return s.repo.GetTotalInvestmentsValue(ctx, userID)
 }
+
+// GetValuationHistory returns recorded valuation points over time.
+func (s *Service) GetValuationHistory(ctx context.Context, userID uuid.UUID, investmentID *uuid.UUID) ([]ValuationHistoryPoint, error) {
+	return s.repo.GetValuationHistory(ctx, userID, investmentID)
+}
+

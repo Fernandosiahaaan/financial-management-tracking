@@ -20,6 +20,7 @@ type Repository interface {
 	UpdateValuation(ctx context.Context, userID, id uuid.UUID, currentValue int64, notes *string) (*Investment, error)
 	SoftDelete(ctx context.Context, userID, id uuid.UUID) error
 	GetTotalInvestmentsValue(ctx context.Context, userID uuid.UUID) (int64, error)
+	GetValuationHistory(ctx context.Context, userID uuid.UUID, investmentID *uuid.UUID) ([]ValuationHistoryPoint, error)
 }
 
 // PostgresRepository implements Repository using pgxpool.
@@ -107,6 +108,11 @@ func (r *PostgresRepository) Create(ctx context.Context, inv Investment) (*Inves
 	if err != nil {
 		return nil, fmt.Errorf("insert investment: %w", err)
 	}
+
+	_, _ = tx.Exec(ctx, `
+		INSERT INTO investment_valuation_history (investment_id, user_id, valuation, notes, created_at)
+		VALUES ($1, $2, $3, $4, $5);
+	`, created.ID, inv.UserID, inv.CurrentValue, "Initial valuation baseline", created.CreatedAt)
 
 	if err := tx.Commit(ctx); err != nil {
 		return nil, fmt.Errorf("commit investment transaction: %w", err)
@@ -238,6 +244,15 @@ func (r *PostgresRepository) UpdateValuation(ctx context.Context, userID, id uui
 		return nil, fmt.Errorf("update investment valuation: %w", err)
 	}
 
+	histNote := "Valuation updated"
+	if notes != nil && *notes != "" {
+		histNote = *notes
+	}
+	_, _ = r.pool.Exec(ctx, `
+		INSERT INTO investment_valuation_history (investment_id, user_id, valuation, notes, created_at)
+		VALUES ($1, $2, $3, $4, NOW());
+	`, id, userID, currentValue, histNote)
+
 	return r.GetByID(ctx, userID, id)
 }
 
@@ -271,3 +286,49 @@ func (r *PostgresRepository) GetTotalInvestmentsValue(ctx context.Context, userI
 	}
 	return total, nil
 }
+
+// GetValuationHistory retrieves valuation timeline points for a user or a specific holding.
+func (r *PostgresRepository) GetValuationHistory(ctx context.Context, userID uuid.UUID, investmentID *uuid.UUID) ([]ValuationHistoryPoint, error) {
+	query := `
+		SELECT
+			h.id, h.investment_id, i.name, i.type,
+			h.valuation, i.capital,
+			h.notes, h.created_at
+		FROM investment_valuation_history h
+		JOIN investments i ON i.id = h.investment_id
+		WHERE h.user_id = $1
+		  AND ($2::uuid IS NULL OR h.investment_id = $2)
+		  AND i.deleted_at IS NULL
+		ORDER BY h.created_at ASC;
+	`
+	rows, err := r.pool.Query(ctx, query, userID, investmentID)
+	if err != nil {
+		return nil, fmt.Errorf("query valuation history: %w", err)
+	}
+	defer rows.Close()
+
+	var points []ValuationHistoryPoint
+	for rows.Next() {
+		var p ValuationHistoryPoint
+		if err := rows.Scan(
+			&p.ID, &p.InvestmentID, &p.InvestmentName, &p.InvestmentType,
+			&p.Valuation, &p.CapitalAtRecord,
+			&p.Notes, &p.CreatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("scan valuation history: %w", err)
+		}
+		p.GainLoss = p.Valuation - p.CapitalAtRecord
+		if p.CapitalAtRecord > 0 {
+			p.GainLossPercentage = (float64(p.GainLoss) / float64(p.CapitalAtRecord)) * 100
+		}
+		p.FormattedValuation = money.FormatIDR(p.Valuation)
+		p.FormattedGainLoss = money.FormatIDR(p.GainLoss)
+		points = append(points, p)
+	}
+
+	if points == nil {
+		points = []ValuationHistoryPoint{}
+	}
+	return points, nil
+}
+

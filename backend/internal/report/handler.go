@@ -26,6 +26,7 @@ func (h *Handler) Routes() chi.Router {
 	r := chi.NewRouter()
 	r.Get("/monthly", h.GetMonthlyReport)
 	r.Get("/cycle", h.GetCycleReport)
+	r.Get("/savings-trend", h.GetSavingsTrend)
 	return r
 }
 
@@ -96,6 +97,30 @@ func (h *Handler) GetCycleReport(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, http.StatusOK, report)
+}
+
+// GetSavingsTrend returns historical cycle savings trend for the user.
+func (h *Handler) GetSavingsTrend(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.GetUserID(r.Context())
+	if !ok {
+		respondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	numCycles := 6
+	if cyclesStr := r.URL.Query().Get("num_cycles"); cyclesStr != "" {
+		if parsed, err := strconv.Atoi(cyclesStr); err == nil && parsed > 0 {
+			numCycles = parsed
+		}
+	}
+
+	trend, err := h.service.GetSavingsTrend(r.Context(), userID, numCycles)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "failed to generate savings trend")
+		return
+	}
+
+	respondJSON(w, http.StatusOK, trend)
 }
 
 func respondJSON(w http.ResponseWriter, status int, data interface{}) {
