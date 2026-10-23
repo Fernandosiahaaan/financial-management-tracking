@@ -306,10 +306,14 @@ export const AccountsManager: React.FC = () => {
               <div className="account-card__body">
                 <div className="balance-field">
                   <span className="balance-label">Current Balance</span>
-                  <span className="balance-amount">{formatAmount(acc.current_balance)}</span>
+                  <span className="balance-amount" title={formatAmount(acc.current_balance)}>
+                    {formatAmount(acc.current_balance)}
+                  </span>
                 </div>
                 <div className="balance-field-small">
-                  <span className="balance-sublabel">Opening: {formatAmount(acc.opening_balance)}</span>
+                  <span className="balance-sublabel" title={`Opening: ${formatAmount(acc.opening_balance)}`}>
+                    Opening: {formatAmount(acc.opening_balance)}
+                  </span>
                 </div>
               </div>
 

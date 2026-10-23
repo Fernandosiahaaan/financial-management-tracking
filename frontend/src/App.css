@@ -308,6 +308,40 @@
   color: var(--color-text-muted);
 }
 
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.password-input-wrapper input {
+  width: 100%;
+  padding-right: 2.75rem;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 0.625rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.password-toggle-btn:hover {
+  color: var(--color-text-primary);
+  background: var(--color-bg-hover);
+}
+
 .form-actions {
   display: flex;
   justify-content: flex-end;
@@ -418,10 +452,10 @@
 .sidebar-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  z-index: var(--z-modal-backdrop);
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 9998;
   animation: fadeIn 0.2s ease-out;
 }
 
@@ -447,6 +481,7 @@
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--color-border-light);
+  flex-shrink: 0;
 }
 
 .sidebar-brand {
@@ -533,7 +568,11 @@
 /* Sidebar Navigation Groups */
 .sidebar-scroll-area {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   padding: 1rem 0.875rem;
   scrollbar-width: thin;
 }
@@ -583,6 +622,9 @@
   text-align: left;
   transition: all var(--transition-fast);
   position: relative;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .nav-tab-btn:hover {
@@ -655,6 +697,7 @@
   flex-direction: column;
   gap: 0.75rem;
   background: var(--color-bg-sidebar);
+  flex-shrink: 0;
 }
 
 .sidebar-user-card {
@@ -894,8 +937,18 @@
     top: 0;
     bottom: 0;
     left: 0;
+    z-index: 9999;
+    width: 280px;
+    max-width: 85vw;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100dvh;
     transform: translateX(-100%);
-    box-shadow: var(--shadow-xl);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    overscroll-behavior: contain;
+    background: var(--color-bg-sidebar);
+    transition: transform var(--transition-base);
   }
 
   .dashboard-sidebar--open {
@@ -908,6 +961,11 @@
 
   .mobile-hamburger-btn {
     display: flex;
+  }
+
+  .nav-tab-btn {
+    padding: 0.6875rem 0.875rem;
+    font-size: 0.875rem;
   }
 
   .dashboard-top-bar {
@@ -926,6 +984,20 @@
 
   .top-bar-breadcrumbs {
     display: none;
+  }
+
+  .balance-summary-banner {
+    padding: 1.25rem 1rem;
+    border-radius: var(--radius-lg);
+  }
+
+  .accounts-grid {
+    grid-template-columns: 1fr;
+    gap: 0.875rem;
+  }
+
+  .account-card {
+    padding: 1.125rem 1rem;
   }
 }
 
@@ -1005,13 +1077,17 @@
 }
 
 .summary-value {
-  font-size: 2.25rem;
+  font-size: clamp(1.5rem, 5.5vw, 2.25rem);
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
   font-family: var(--font-family-mono, monospace);
   position: relative;
   z-index: 1;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .summary-subtext {
@@ -1061,7 +1137,7 @@
 
 .accounts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
   gap: 1.25rem;
 }
 
@@ -1097,12 +1173,15 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: 0.75rem;
 }
 
 .account-meta {
   display: flex;
   align-items: center;
   gap: 0.875rem;
+  min-width: 0;
+  flex: 1;
 }
 
 .account-icon {
@@ -1123,6 +1202,9 @@
   font-weight: 700;
   color: var(--color-text-primary);
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .account-type-tag {
@@ -1135,7 +1217,14 @@
 .account-card__body {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.balance-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .balance-label {
@@ -1147,16 +1236,29 @@
 }
 
 .balance-amount {
-  font-size: 1.375rem;
+  font-size: clamp(1.15rem, 4.5vw, 1.375rem);
   font-weight: 800;
   font-family: var(--font-family-mono, monospace);
   color: var(--color-text-primary);
   letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.balance-field-small {
+  min-width: 0;
 }
 
 .balance-sublabel {
   font-size: 11.5px;
   color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  max-width: 100%;
 }
 
 .account-card__footer {

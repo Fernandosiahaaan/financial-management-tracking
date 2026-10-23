@@ -49,6 +49,27 @@ describe('App & Authentication Flow', () => {
     });
   });
 
+  it('toggles password visibility between password and text', async () => {
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/^Password$/i)).toBeInTheDocument();
+    });
+
+    const passwordInput = screen.getByLabelText(/^Password$/i) as HTMLInputElement;
+    expect(passwordInput.type).toBe('password');
+
+    const toggleBtn = screen.getByRole('button', { name: /Show password/i });
+    fireEvent.click(toggleBtn);
+
+    expect(passwordInput.type).toBe('text');
+
+    const hideBtn = screen.getByRole('button', { name: /Hide password/i });
+    fireEvent.click(hideBtn);
+
+    expect(passwordInput.type).toBe('password');
+  });
+
   it('toggles to register mode and displays cycle start day field', async () => {
     render(<App />);
 
@@ -85,7 +106,7 @@ describe('App & Authentication Flow', () => {
     fireEvent.change(screen.getByLabelText(/Email Address/i), {
       target: { value: 'investor@example.com' },
     });
-    fireEvent.change(screen.getByLabelText(/Password/i), {
+    fireEvent.change(screen.getByLabelText(/^Password$/i), {
       target: { value: 'Secret123!' },
     });
 

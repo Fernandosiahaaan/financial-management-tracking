@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { PinLoginForm } from './PinLoginForm';
 import { isPinConfigured } from '../utils/pinAuth';
+import { Eye, EyeOff } from 'lucide-react';
 
 export const AuthForms: React.FC = () => {
   const { login, register, error, clearError, isLoading } = useAuth();
@@ -10,6 +11,7 @@ export const AuthForms: React.FC = () => {
   const [hasPinOnDevice, setHasPinOnDevice] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [cycleStartDay, setCycleStartDay] = useState(1);
   const [clientError, setClientError] = useState('');
 
@@ -113,18 +115,31 @@ export const AuthForms: React.FC = () => {
 
         <div className="form-group">
           <label htmlFor="auth-password">Password</label>
-          <input
-            id="auth-password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              setClientError('');
-            }}
-            disabled={isLoading}
-            required
-          />
+          <div className="password-input-wrapper">
+            <input
+              id="auth-password"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setClientError('');
+              }}
+              disabled={isLoading}
+              required
+            />
+            <button
+              type="button"
+              className="password-toggle-btn"
+              id="auth-password-toggle-btn"
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              title={showPassword ? 'Hide password' : 'Show password'}
+              tabIndex={-1}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
           <span className="form-hint">At least 8 characters</span>
         </div>
 
