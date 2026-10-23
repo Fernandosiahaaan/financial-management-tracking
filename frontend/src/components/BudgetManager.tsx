@@ -10,12 +10,13 @@ import {
 } from '../api/budgets';
 import { listCategories, type Category } from '../api/categories';
 import { formatRupiah, formatNumberIDR, parseRupiahToCents, formatCurrencyInput } from '../utils/currency';
-import { usePrivacy } from '../context/PrivacyContext';
-import { PrivacyToggle } from './PrivacyToggle';
+
+/** Format IDR amount */
+function fmtIDR(amount: number): string {
+  return formatRupiah(amount);
+}
 
 export const BudgetManager: React.FC = () => {
-  const { formatAmount } = usePrivacy();
-  const fmtIDR = (amount: number): string => (formatAmount ? formatAmount(amount) : formatRupiah(amount));
   const [cycleSummary, setCycleSummary] = useState<CycleSummary | null>(null);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -163,10 +164,7 @@ export const BudgetManager: React.FC = () => {
   return (
     <section className="manager-card" id="budget-manager">
       <div className="manager-card__header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <h2 className="manager-card__title">📊 Budget</h2>
-          <PrivacyToggle variant="icon" id="budget-privacy-toggle" />
-        </div>
+        <h2 className="manager-card__title">📊 Budget</h2>
         {!showForm && (
           <button
             className="btn btn--primary btn--sm"

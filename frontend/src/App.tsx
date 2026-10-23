@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { AuthForms } from './components/AuthForms';
 import { DashboardView } from './components/DashboardView';
 import { PrivacyProvider } from './context/PrivacyContext';
+import { ThemeProvider } from './context/ThemeContext';
 import './App.css';
 
 const MainContent: React.FC = () => {
@@ -42,11 +43,13 @@ const MainContent: React.FC = () => {
 
 function App() {
   return (
-    <AuthProvider>
+    <ThemeProvider defaultTheme="dark">
+      <AuthProvider>
       <PrivacyProvider defaultHidden={true}>
         <MainContent />
       </PrivacyProvider>
     </AuthProvider>
+    </ThemeProvider>
   );
 }
 

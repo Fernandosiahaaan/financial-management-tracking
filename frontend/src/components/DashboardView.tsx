@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
+import { fetchHealth, type HealthResponse } from '../api/client';
 import { UserSettingsCard } from './UserSettingsCard';
 import { AccountsManager } from './AccountsManager';
 import { CategoriesManager } from './CategoriesManager';
@@ -13,6 +15,26 @@ import { InvestmentsManager } from './InvestmentsManager';
 import { ReportsManager } from './ReportsManager';
 import { PrivacyToggle } from './PrivacyToggle';
 import { listAccounts, type Account } from '../api/accounts';
+import {
+  LayoutDashboard,
+  FileText,
+  ArrowLeftRight,
+  PieChart,
+  Target,
+  HandCoins,
+  TrendingUp,
+  Landmark,
+  Tags,
+  Settings,
+  LogOut,
+  Sun,
+  Moon,
+  Menu,
+  X,
+  Sparkles,
+  Activity,
+  Wallet,
+} from 'lucide-react';
 
 type ActiveNavTab =
   | 'overview'
@@ -26,36 +48,69 @@ type ActiveNavTab =
   | 'categories'
   | 'settings';
 
-const NAV_TABS = [
-  { id: 'overview' as const, label: 'Dashboard', icon: '📊' },
-  { id: 'reports' as const, label: 'Reports', icon: '📑' },
-  { id: 'transactions' as const, label: 'Transactions', icon: '💸' },
-  { id: 'budgets' as const, label: 'Budgets', icon: '📊' },
-  { id: 'allocations' as const, label: 'Allocations', icon: '🎯' },
-  { id: 'receivables' as const, label: 'Receivables', icon: '🤝' },
-  { id: 'investments' as const, label: 'Investments', icon: '📈' },
-  { id: 'accounts' as const, label: 'Accounts', icon: '🏛️' },
-  { id: 'categories' as const, label: 'Categories', icon: '🏷️' },
-  { id: 'settings' as const, label: 'Profile & Settings', icon: '⚙️' },
+interface NavItemConfig {
+  id: ActiveNavTab;
+  label: string;
+  badge?: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  elementId: string;
+}
+
+const NAV_GROUPS: { group: string; items: NavItemConfig[] }[] = [
+  {
+    group: 'Ringkasan & Analisis',
+    items: [
+      { id: 'overview', label: '📊 Dashboard', icon: LayoutDashboard, elementId: 'nav-tab-overview' },
+      { id: 'reports', label: '📑 Reports', icon: FileText, elementId: 'nav-tab-reports' },
+    ],
+  },
+  {
+    group: 'Arus Kas & Anggaran',
+    items: [
+      { id: 'transactions', label: '💸 Transactions', icon: ArrowLeftRight, elementId: 'nav-tab-transactions' },
+      { id: 'budgets', label: '📊 Budgets', icon: PieChart, elementId: 'nav-tab-budgets' },
+      { id: 'allocations', label: '🎯 Allocations', icon: Target, elementId: 'nav-tab-allocations' },
+    ],
+  },
+  {
+    group: 'Aset & Portofolio',
+    items: [
+      { id: 'receivables', label: '🤝 Receivables', icon: HandCoins, elementId: 'nav-tab-receivables' },
+      { id: 'investments', label: '📈 Investments', icon: TrendingUp, elementId: 'nav-tab-investments' },
+      { id: 'accounts', label: '🏛️ Accounts', icon: Landmark, elementId: 'nav-tab-accounts' },
+      { id: 'categories', label: '🏷️ Categories', icon: Tags, elementId: 'nav-tab-categories' },
+    ],
+  },
+  {
+    group: 'Sistem',
+    items: [
+      { id: 'settings', label: '⚙️ Profile & Settings', icon: Settings, elementId: 'nav-tab-settings' },
+    ],
+  },
 ];
 
 export const DashboardView: React.FC = () => {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<ActiveNavTab>('overview');
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [health, setHealth] = useState<HealthResponse | null>(null);
+  const [healthLoading, setHealthLoading] = useState<boolean>(true);
+  const [healthError, setHealthError] = useState<string>('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
-  // Lock body scrolling on mobile when sidebar drawer is open
-  useEffect(() => {
-    if (sidebarOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
+  const loadHealth = async () => {
+    setHealthLoading(true);
+    setHealthError('');
+    try {
+      const data = await fetchHealth();
+      setHealth(data);
+    } catch (err) {
+      setHealthError(err instanceof Error ? err.message : 'System health check failed');
+    } finally {
+      setHealthLoading(false);
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [sidebarOpen]);
+  };
 
   const loadAccounts = async () => {
     try {
@@ -67,209 +122,298 @@ export const DashboardView: React.FC = () => {
   };
 
   useEffect(() => {
+    loadHealth();
     loadAccounts();
   }, []);
 
-  const handleSelectTab = (tabId: ActiveNavTab) => {
+  const handleNavClick = (tabId: ActiveNavTab) => {
     setActiveTab(tabId);
-    setSidebarOpen(false);
+    setMobileMenuOpen(false);
     if (tabId === 'receivables' || tabId === 'investments') {
       loadAccounts();
     }
   };
 
+  // Human-readable titles for the top bar
+  const getTabTitle = (tab: ActiveNavTab) => {
+    switch (tab) {
+      case 'overview': return 'Financial Overview';
+      case 'reports': return 'Financial Reports & Snapshots';
+      case 'transactions': return 'Transaction Ledger';
+      case 'budgets': return 'Budget Planning & Control';
+      case 'allocations': return 'Income Allocation Strategy';
+      case 'receivables': return 'Receivables & Loan Tracker';
+      case 'investments': return 'Investment Portfolio';
+      case 'accounts': return 'Account & Liquidity Balances';
+      case 'categories': return 'Transaction Categories';
+      case 'settings': return 'User Profile & Preferences';
+      default: return 'FinTrack Workspace';
+    }
+  };
+
   return (
-    <div className="dashboard" id="dashboard-view">
-      {/* Mobile Top Bar (Clean & Safe from Notches) */}
-      <header className="mobile-header" id="mobile-top-header">
-        <button
-          type="button"
-          className="mobile-hamburger-btn"
-          id="mobile-sidebar-toggle"
-          onClick={() => setSidebarOpen(true)}
-          aria-label="Buka Menu Navigasi"
-        >
-          <span className="hamburger-icon">☰</span>
-        </button>
-
-        <div
-          className="mobile-header-brand"
-          onClick={() => handleSelectTab('overview')}
-          style={{ cursor: 'pointer' }}
-        >
-          <img src="/icon-192.png" alt="FinTrack Logo" className="brand-logo-img" />
-          <span className="brand-name">FinTrack</span>
-        </div>
-
-        <div className="mobile-header-actions">
-          <PrivacyToggle />
-        </div>
-      </header>
-
-      {/* Mobile Drawer Backdrop */}
-      {sidebarOpen && (
+    <div className="dashboard-app-layout" id="dashboard-view">
+      {/* Mobile Backdrop */}
+      {mobileMenuOpen && (
         <div
           className="sidebar-backdrop"
-          onClick={() => setSidebarOpen(false)}
+          onClick={() => setMobileMenuOpen(false)}
           aria-hidden="true"
         />
       )}
 
-      {/* Responsive Sidebar (Desktop Permanent / Mobile Slide-Over Drawer) */}
-      <aside
-        className={`dashboard-sidebar ${sidebarOpen ? 'dashboard-sidebar--open' : ''}`}
-        id="dashboard-sidebar"
-      >
-        {/* Sidebar Header */}
-        <div className="sidebar-header">
-          <div
-            className="dashboard-brand"
-            onClick={() => handleSelectTab('overview')}
-            style={{ cursor: 'pointer' }}
-          >
-            <span className="brand-logo">
-              <img src="/icon-192.png" alt="FinTrack Logo" className="brand-logo-img" />
-            </span>
-            <div className="brand-info">
-              <span className="brand-name">FinTrack</span>
-              <span className="brand-tag">Finance Hub</span>
+      {/* ── Modern Collapsible Sidebar ─────────────────────────────── */}
+      <aside className={`dashboard-sidebar ${mobileMenuOpen ? 'dashboard-sidebar--open' : ''}`}>
+        {/* Brand Header */}
+        <div className="sidebar-brand-wrapper">
+          <div className="sidebar-brand">
+            <div className="brand-icon-box">
+              <Wallet size={20} className="brand-icon-svg" />
+              <div className="brand-glow-ring" />
+            </div>
+            <div className="brand-text-block">
+              <div className="brand-title-row">
+                <span className="brand-title">FinTrack</span>
+                <span className="brand-pill">v0.2.0</span>
+              </div>
+              <span className="brand-tagline">Financial Management</span>
             </div>
           </div>
-
           <button
-            type="button"
-            className="sidebar-close-btn"
-            onClick={() => setSidebarOpen(false)}
-            aria-label="Tutup Menu"
+            className="sidebar-mobile-close"
+            onClick={() => setMobileMenuOpen(false)}
+            aria-label="Close menu"
           >
-            ✕
+            <X size={18} />
           </button>
         </div>
 
-        {/* Sidebar Navigation Menu */}
-        <nav className="sidebar-nav">
-          <div className="sidebar-nav-title">MENU UTAMA</div>
-          <div className="sidebar-nav-links" id="nav-tab-links">
-            {NAV_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                className={`sidebar-nav-item ${activeTab === tab.id ? 'sidebar-nav-item--active' : ''}`}
-                onClick={() => handleSelectTab(tab.id)}
-                id={`nav-tab-${tab.id}`}
-              >
-                <span className="sidebar-nav-icon">{tab.icon}</span>
-                <span className="sidebar-nav-label">{tab.label}</span>
-                {activeTab === tab.id && <span className="sidebar-active-indicator" />}
-              </button>
+        {/* Navigation Groups */}
+        <div className="sidebar-scroll-area">
+          <nav className="sidebar-nav-groups dashboard-nav">
+            {NAV_GROUPS.map((grp) => (
+              <div key={grp.group} className="sidebar-group">
+                <span className="sidebar-group-label">{grp.group}</span>
+                <div className="sidebar-group-items nav-tab-links">
+                  {grp.items.map((item) => {
+                    const IconComponent = item.icon;
+                    const isActive = activeTab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        id={item.elementId}
+                        className={`nav-tab-btn ${isActive ? 'nav-tab-btn--active' : ''}`}
+                        onClick={() => handleNavClick(item.id)}
+                      >
+                        <span className="nav-tab-icon-wrapper">
+                          <IconComponent size={17} className="nav-tab-lucide-icon" />
+                        </span>
+                        <span className="nav-tab-label-text">{item.label}</span>
+                        {isActive && <span className="nav-tab-active-dot" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             ))}
-          </div>
-        </nav>
+          </nav>
+        </div>
 
-        {/* Sidebar Footer with Profile & Sign Out (Comfortable & Easily Reached on Mobile) */}
+        {/* Sidebar Footer User Card */}
         <div className="sidebar-footer">
-          <div className="sidebar-privacy-row">
-            <span className="sidebar-privacy-label">Mode Privasi</span>
-            <PrivacyToggle />
-          </div>
-
-          {/* User Profile Card */}
-          <button
-            type="button"
-            className={`sidebar-user-card ${activeTab === 'settings' ? 'sidebar-user-card--active' : ''}`}
-            id="user-info-pill"
-            title="Klik untuk cek Profil & Atur PIN"
-            onClick={() => handleSelectTab('settings')}
-          >
-            <div className="sidebar-user-avatar">👤</div>
-            <div className="sidebar-user-meta">
-              <span className="sidebar-user-email">{user?.email}</span>
-              <span className="sidebar-user-badge">
-                {user?.has_pin ? '🟢 PIN Aktif' : '⚪ Atur PIN Akun'}
+          <div className="sidebar-user-card" id="user-info-pill">
+            <div className="user-avatar-circle">
+              <span className="user-avatar-initials">
+                {user?.email ? user.email.slice(0, 2).toUpperCase() : 'FT'}
+              </span>
+              <span className="user-online-dot" />
+            </div>
+            <div className="user-details-column">
+              <span className="user-email-text user-email" title={user?.email}>
+                {user?.email}
+              </span>
+              <span className="user-cycle-caption">
+                Cycle Day {user?.cycle_start_day || 1}
               </span>
             </div>
-            <span className="sidebar-user-action-arrow">⚙️</span>
-          </button>
+          </div>
 
-          {/* Large, Accessible Sign Out Button */}
-          <button
-            type="button"
-            className="btn btn--outline dashboard-logout-btn sidebar-logout-btn"
-            id="dashboard-logout-btn"
-            onClick={() => {
-              setSidebarOpen(false);
-              logout();
-            }}
-          >
-            <span className="logout-icon">🚪</span>
-            <span>Sign Out</span>
-          </button>
+          <div className="sidebar-action-bar dashboard-user-actions">
+            <button
+              className="sidebar-action-btn"
+              onClick={toggleTheme}
+              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} mode`}
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+              <span className="sidebar-action-label">
+                {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+              </span>
+            </button>
+
+            <button
+              className="btn btn--outline btn--sm sidebar-logout-btn"
+              id="dashboard-logout-btn"
+              onClick={logout}
+              title="Sign Out"
+            >
+              <LogOut size={15} />
+              <span>Sign Out</span>
+            </button>
+          </div>
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <div className="dashboard-main-area">
+      {/* ── Main Workspace Body ───────────────────────────────────── */}
+      <div className="dashboard-main-wrapper">
+        {/* Top Header Bar */}
+        <header className="dashboard-top-bar">
+          <div className="top-bar-left">
+            <button
+              className="mobile-hamburger-btn"
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Open navigation menu"
+            >
+              <Menu size={20} />
+            </button>
+            <div className="top-bar-heading">
+              <div className="top-bar-breadcrumbs">
+                <span className="top-bar-breadcrumb-item">Workspace</span>
+                <span className="top-bar-breadcrumb-sep">/</span>
+                <span className="top-bar-breadcrumb-active">{getTabTitle(activeTab)}</span>
+              </div>
+              <h1 className="top-bar-title">{getTabTitle(activeTab)}</h1>
+            </div>
+          </div>
 
-      {/* Main Content Pane */}
-      <main className="dashboard-content">
-        {activeTab !== 'overview' && <CycleBar />}
+          <div className="top-bar-right">
+            {/* Live System Health Badge */}
+            <div
+              className={`top-bar-health-pill ${
+                health?.status === 'healthy' ? 'top-bar-health-pill--healthy' : 'top-bar-health-pill--warning'
+              }`}
+              title={`API: ${health?.status || 'checking'}, DB: ${health?.database || 'checking'}`}
+            >
+              <span className="health-pulse-dot" />
+              <span className="health-status-text">
+                {healthLoading ? 'Connecting…' : health?.status === 'healthy' ? 'System Online' : 'Check API'}
+              </span>
+            </div>
 
-        {activeTab === 'overview' && (
-          <>
-            <section className="profile-banner welcome-banner">
-              <div className="welcome-banner-header">
-                <div className="welcome-banner-text">
-                  <div className="welcome-greeting-row">
-                    <h2 className="banner-title">Welcome, {user?.email}!</h2>
-                    <span className="badge badge--success welcome-badge">
-                      🛡️ Akun Aktif
-                    </span>
+            {/* Privacy Toggle Button */}
+            <PrivacyToggle />
+          </div>
+        </header>
+
+        {/* Content Pane */}
+        <main className="dashboard-content">
+          {activeTab !== 'overview' && <CycleBar />}
+
+          {activeTab === 'overview' && (
+            <>
+              <DashboardOverview onNavigateTab={(tab) => handleNavClick(tab as ActiveNavTab)} />
+
+              {/* Profile & Cycle Information */}
+              <section className="profile-banner">
+                <div className="profile-banner__glow" />
+                <div className="profile-banner__header">
+                  <div className="profile-banner__badge">
+                    <Sparkles size={16} />
+                    <span>Active Session</span>
                   </div>
+                  <h2 className="banner-title">Welcome, {user?.email}!</h2>
                   <p className="banner-subtitle">
-                    Workspace finansial pribadi Anda untuk memantau arus kas, alokasi anggaran, dan portofolio aset secara real-time.
+                    Your personal finance workspace is secured and authenticated.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  className="btn btn--outline btn--sm welcome-profile-btn"
-                  onClick={() => handleSelectTab('settings')}
-                  title="Buka Profil & Pengaturan Lengkap"
-                >
-                  ⚙️ Kelola Profil & PIN
-                </button>
-              </div>
-
-              <div className="welcome-meta-chips">
-                <div className="welcome-chip">
-                  <span className="welcome-chip-icon">📅</span>
-                  <span className="welcome-chip-label">Siklus Periode:</span>
-                  <strong className="welcome-chip-val">Day {user?.cycle_start_day || 1} of each month</strong>
+                <div className="profile-details-grid">
+                  <div className="detail-item">
+                    <span className="detail-label">Account ID</span>
+                    <code className="detail-code">{user?.id}</code>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Cycle Start Day</span>
+                    <span className="detail-value">Day {user?.cycle_start_day} of each month</span>
+                  </div>
                 </div>
-                <div className="welcome-chip">
-                  <span className="welcome-chip-icon">🔐</span>
-                  <span className="welcome-chip-label">Keamanan PIN:</span>
-                  <span className={user?.has_pin ? 'text-success' : 'text-muted'}>
-                    {user?.has_pin ? '🟢 Aktif di Database' : '⚪ Belum Dikonfigurasi'}
-                  </span>
+              </section>
+
+              {/* User Settings */}
+              <UserSettingsCard />
+
+              {/* System Health Status */}
+              <section className="health-card" id="system-health-card">
+                <div className="health-card__top">
+                  <div className="health-card__title-wrap">
+                    <Activity size={18} className="health-card__icon" />
+                    <h3 className="health-card__title">⚡ Backend & Database Health</h3>
+                  </div>
+                  <button
+                    className="btn btn--secondary btn--sm btn-refresh"
+                    onClick={loadHealth}
+                    disabled={healthLoading}
+                    title="Refresh health status"
+                  >
+                    🔄 Refresh
+                  </button>
                 </div>
-              </div>
-            </section>
 
-            <DashboardOverview onNavigateTab={(tab) => setActiveTab(tab as ActiveNavTab)} />
-          </>
-        )}
+                {healthLoading && (
+                  <div className="health-loading">
+                    <div className="spinner" />
+                    <span>Verifying service connectivity…</span>
+                  </div>
+                )}
 
-        {activeTab === 'reports' && <ReportsManager />}
-        {activeTab === 'transactions' && <TransactionsManager />}
-        {activeTab === 'budgets' && <BudgetManager />}
-        {activeTab === 'allocations' && <AllocationManager />}
-        {activeTab === 'receivables' && <ReceivablesManager accounts={accounts} />}
-        {activeTab === 'investments' && <InvestmentsManager accounts={accounts} />}
-        {activeTab === 'accounts' && <AccountsManager />}
-        {activeTab === 'categories' && <CategoriesManager />}
-        {activeTab === 'settings' && <UserSettingsCard />}
-      </main>
+                {healthError && (
+                  <div className="auth-alert auth-alert--error">
+                    <span>⚠️ {healthError}</span>
+                  </div>
+                )}
+
+                {!healthLoading && !healthError && health && (
+                  <div className="health-card__rows">
+                    <div className="health-row">
+                      <span className="health-row__label">API Status</span>
+                      <span className="health-row__value">
+                        <span className={`status-badge status-badge--${health.status}`}>
+                          <span className="status-badge__dot" />
+                          {health.status}
+                        </span>
+                      </span>
+                    </div>
+                    <div className="health-row">
+                      <span className="health-row__label">PostgreSQL</span>
+                      <span className="health-row__value">
+                        <span
+                          className={`status-badge ${
+                            health.database === 'connected'
+                              ? 'status-badge--healthy'
+                              : 'status-badge--unhealthy'
+                          }`}
+                        >
+                          <span className="status-badge__dot" />
+                          {health.database}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </section>
+            </>
+          )}
+
+          {activeTab === 'reports' && <ReportsManager />}
+          {activeTab === 'transactions' && <TransactionsManager />}
+          {activeTab === 'budgets' && <BudgetManager />}
+          {activeTab === 'allocations' && <AllocationManager />}
+          {activeTab === 'receivables' && <ReceivablesManager accounts={accounts} />}
+          {activeTab === 'investments' && <InvestmentsManager accounts={accounts} />}
+          {activeTab === 'accounts' && <AccountsManager />}
+          {activeTab === 'categories' && <CategoriesManager />}
+          {activeTab === 'settings' && <UserSettingsCard />}
+        </main>
       </div>
     </div>
   );
 };
-

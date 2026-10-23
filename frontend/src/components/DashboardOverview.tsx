@@ -2,6 +2,20 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { getDashboardData, type DashboardData } from '../api/dashboard';
 import { usePrivacy } from '../context/PrivacyContext';
 import { PrivacyToggle } from './PrivacyToggle';
+import {
+  Calendar,
+  Landmark,
+  TrendingUp,
+  TrendingDown,
+  ArrowUpRight,
+  ArrowDownRight,
+  PiggyBank,
+  PieChart,
+  CreditCard,
+  AlertTriangle,
+  CheckCircle2,
+  PlusCircle,
+} from 'lucide-react';
 
 interface DashboardOverviewProps {
   onNavigateTab?: (tab: string) => void;
@@ -95,7 +109,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
       <section className="dashboard-cycle-panel" id="dashboard-cycle-header">
         <div className="dashboard-cycle-panel__left">
           <div className="dashboard-cycle-badge">
-            <span className="dashboard-cycle-badge__icon">📅</span>
+            <div className="dashboard-cycle-icon-box">
+              <Calendar size={18} className="cycle-icon-svg" />
+            </div>
             <div>
               <span className="dashboard-cycle-badge__label">Financial Cycle</span>
               <h2 className="dashboard-cycle-badge__dates">
@@ -110,15 +126,18 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
                 style={{ width: `${cycleProgressPct}%` }}
               />
             </div>
-            <span className="dashboard-cycle-track-group__hint">
-              Day {data.cycle.day_of_cycle} of {data.cycle.total_days} ({data.cycle.days_remaining} days remaining)
-            </span>
+            <div className="dashboard-cycle-info-row">
+              <span className="dashboard-cycle-track-group__hint">
+                Day {data.cycle.day_of_cycle} of {data.cycle.total_days} ({data.cycle.days_remaining} days remaining)
+              </span>
+              <span className="cycle-pct-badge">{cycleProgressPct}% elapsed</span>
+            </div>
           </div>
         </div>
 
         <div className="dashboard-cycle-panel__right">
           <button
-            className="btn btn--outline btn--sm"
+            className="btn btn--outline btn--sm cycle-nav-btn"
             onClick={handlePrevCycle}
             id="btn-prev-cycle"
             title="Previous cycle"
@@ -126,7 +145,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
             ← Previous
           </button>
           <button
-            className="btn btn--outline btn--sm"
+            className="btn btn--outline btn--sm cycle-nav-btn"
             onClick={handleToday}
             id="btn-today-cycle"
             title="Current cycle"
@@ -134,7 +153,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
             Current
           </button>
           <button
-            className="btn btn--outline btn--sm"
+            className="btn btn--outline btn--sm cycle-nav-btn"
             onClick={handleNextCycle}
             id="btn-next-cycle"
             title="Next cycle"
@@ -148,12 +167,15 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
       <section className="dashboard-kpi-grid" id="dashboard-kpi-grid">
         {/* Total Assets & Growth */}
         <div className="kpi-card kpi-card--highlight" id="kpi-total-assets">
+          <div className="kpi-card__glow" />
           <div className="kpi-card__header">
             <div className="kpi-card__title-row">
               <span className="kpi-card__title">Total Net Assets</span>
               <PrivacyToggle variant="icon" id="dashboard-total-assets-privacy-btn" />
             </div>
-            <span className="kpi-card__icon">🏛️</span>
+            <div className="kpi-card__icon-box kpi-card__icon-box--brand">
+              <Landmark size={20} />
+            </div>
           </div>
           <div className="kpi-card__value-row">
             <span className="kpi-card__main-value">{fmtIDR(data.total_assets)}</span>
@@ -174,35 +196,45 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
         <div className="kpi-card" id="kpi-cycle-income">
           <div className="kpi-card__header">
             <span className="kpi-card__title">Cycle Income</span>
-            <span className="kpi-card__icon">📈</span>
+            <div className="kpi-card__icon-box kpi-card__icon-box--income">
+              <TrendingUp size={20} />
+            </div>
           </div>
           <div className="kpi-card__value-row">
             <span className="kpi-card__main-value kpi-card__main-value--income">
               {fmtIDR(data.income)}
             </span>
           </div>
-          <span className="kpi-card__footer-note">Total earned during cycle</span>
+          <span className="kpi-card__footer-note">
+            <ArrowUpRight size={14} className="kpi-inline-icon" /> Total earned during cycle
+          </span>
         </div>
 
         {/* Cycle Expenses */}
         <div className="kpi-card" id="kpi-cycle-expense">
           <div className="kpi-card__header">
             <span className="kpi-card__title">Cycle Spending</span>
-            <span className="kpi-card__icon">📉</span>
+            <div className="kpi-card__icon-box kpi-card__icon-box--expense">
+              <TrendingDown size={20} />
+            </div>
           </div>
           <div className="kpi-card__value-row">
             <span className="kpi-card__main-value kpi-card__main-value--expense">
               {fmtIDR(data.expense)}
             </span>
           </div>
-          <span className="kpi-card__footer-note">Total operational expenses</span>
+          <span className="kpi-card__footer-note">
+            <ArrowDownRight size={14} className="kpi-inline-icon" /> Total operational expenses
+          </span>
         </div>
 
         {/* Net Savings */}
         <div className="kpi-card" id="kpi-net-savings">
           <div className="kpi-card__header">
             <span className="kpi-card__title">Net Operational Savings</span>
-            <span className="kpi-card__icon">💎</span>
+            <div className="kpi-card__icon-box kpi-card__icon-box--savings">
+              <PiggyBank size={20} />
+            </div>
           </div>
           <div className="kpi-card__value-row">
             <span
@@ -222,11 +254,16 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
         {/* Left Column: Budgeted vs Actual Spending */}
         <section className="dashboard-section-card" id="dashboard-budget-section">
           <div className="dashboard-section-card__header">
-            <div>
-              <h3 className="dashboard-section-card__title">📊 Budget Status</h3>
-              <span className="dashboard-section-card__subtitle">
-                Category spending limits and variances
-              </span>
+            <div className="dashboard-section-card__title-group">
+              <div className="section-title-icon-box">
+                <PieChart size={18} />
+              </div>
+              <div>
+                <h3 className="dashboard-section-card__title">📊 Budget Status</h3>
+                <span className="dashboard-section-card__subtitle">
+                  Category spending limits and variances
+                </span>
+              </div>
             </div>
             {onNavigateTab && (
               <button
@@ -241,14 +278,17 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
 
           {data.budgets.length === 0 ? (
             <div className="dashboard-empty-state">
-              <span className="dashboard-empty-state__icon">🎯</span>
+              <div className="empty-state-icon-box">
+                <PieChart size={32} />
+              </div>
               <p>No budgets configured for this cycle.</p>
               {onNavigateTab && (
                 <button
                   className="btn btn--primary btn--sm"
                   onClick={() => onNavigateTab('budgets')}
                 >
-                  + Add First Budget
+                  <PlusCircle size={15} />
+                  <span>+ Add First Budget</span>
                 </button>
               )}
             </div>
@@ -282,20 +322,33 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
                     <div className="dashboard-progress-track">
                       <div
                         className={`dashboard-progress-fill ${b.overspent ? 'dashboard-progress-fill--over' : ''}`}
-                        style={{ width: `${usedPct}%` }}
+                        style={{
+                          width: `${usedPct}%`,
+                          backgroundColor: b.overspent ? '#ef4444' : (b.category_color || '#6366f1'),
+                        }}
                       />
                     </div>
 
                     <div className="dashboard-budget-item__footer">
-                      <span className="dashboard-budget-item__pct">{usedPct}% consumed</span>
+                      <span className="dashboard-budget-item__pct">
+                        {usedPct}% consumed
+                      </span>
                       <span
                         className={`dashboard-budget-item__variance ${
                           b.overspent ? 'dashboard-budget-item__variance--over' : 'dashboard-budget-item__variance--under'
                         }`}
                       >
-                        {b.overspent
-                          ? `OVERSPENT by ${fmtIDR(Math.abs(b.variance))}`
-                          : `${fmtIDR(b.variance)} remaining`}
+                        {b.overspent ? (
+                          <span className="variance-tag variance-tag--danger">
+                            <AlertTriangle size={13} />
+                            OVERSPENT by {fmtIDR(Math.abs(b.variance))}
+                          </span>
+                        ) : (
+                          <span className="variance-tag variance-tag--success">
+                            <CheckCircle2 size={13} />
+                            {fmtIDR(b.variance)} remaining
+                          </span>
+                        )}
                       </span>
                     </div>
                   </div>
@@ -308,11 +361,16 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
         {/* Right Column: Account Balances Overview */}
         <section className="dashboard-section-card" id="dashboard-accounts-section">
           <div className="dashboard-section-card__header">
-            <div>
-              <h3 className="dashboard-section-card__title">🏛️ Account Overview</h3>
-              <span className="dashboard-section-card__subtitle">
-                Current balances across accounts
-              </span>
+            <div className="dashboard-section-card__title-group">
+              <div className="section-title-icon-box">
+                <CreditCard size={18} />
+              </div>
+              <div>
+                <h3 className="dashboard-section-card__title">🏛️ Account Overview</h3>
+                <span className="dashboard-section-card__subtitle">
+                  Current balances across accounts
+                </span>
+              </div>
             </div>
             {onNavigateTab && (
               <button
@@ -327,14 +385,17 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
 
           {data.accounts.length === 0 ? (
             <div className="dashboard-empty-state">
-              <span className="dashboard-empty-state__icon">💳</span>
+              <div className="empty-state-icon-box">
+                <CreditCard size={32} />
+              </div>
               <p>No active accounts configured.</p>
               {onNavigateTab && (
                 <button
                   className="btn btn--primary btn--sm"
                   onClick={() => onNavigateTab('accounts')}
                 >
-                  + Add First Account
+                  <PlusCircle size={15} />
+                  <span>+ Add First Account</span>
                 </button>
               )}
             </div>
@@ -343,7 +404,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
               {data.accounts.map((acc) => (
                 <div key={acc.id} className="dashboard-account-tile" id={`account-tile-${acc.id}`}>
                   <div className="dashboard-account-tile__top">
-                    <span className="dashboard-account-tile__name">{acc.name}</span>
+                    <div className="dashboard-account-tile__info">
+                      <span className="dashboard-account-tile__name">{acc.name}</span>
+                    </div>
                     <span className="account-type-pill">{acc.type}</span>
                   </div>
                   <div className="dashboard-account-tile__balance">
