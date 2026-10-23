@@ -27,6 +27,7 @@ type Repository interface {
 	UpdateUserSettings(ctx context.Context, userID uuid.UUID, cycleStartDay int) (*UserSettings, error)
 	GetUserProfile(ctx context.Context, userID uuid.UUID) (*UserProfile, error)
 	SetPinHash(ctx context.Context, userID uuid.UUID, pinHash *string) error
+	UpdatePasswordHash(ctx context.Context, userID uuid.UUID, passwordHash string) error
 }
 
 // PostgresRepository implements Repository using pgxpool.
@@ -237,4 +238,24 @@ func (r *PostgresRepository) SetPinHash(ctx context.Context, userID uuid.UUID, p
 
 	return nil
 }
+
+// UpdatePasswordHash updates the password_hash for a user.
+func (r *PostgresRepository) UpdatePasswordHash(ctx context.Context, userID uuid.UUID, passwordHash string) error {
+	query := `
+		UPDATE users
+		SET password_hash = $2, updated_at = $3
+		WHERE id = $1;
+	`
+
+	cmdTag, err := r.pool.Exec(ctx, query, userID, passwordHash, time.Now())
+	if err != nil {
+		return fmt.Errorf("update password hash: %w", err)
+	}
+	if cmdTag.RowsAffected() == 0 {
+		return ErrUserNotFound
+	}
+
+	return nil
+}
+
 

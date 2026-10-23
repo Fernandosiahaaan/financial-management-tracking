@@ -16,6 +16,7 @@ var (
 	ErrInvalidCycleDay    = errors.New("cycle start day must be between 1 and 31")
 	ErrPinNotConfigured   = errors.New("pin has not been configured for this account")
 	ErrInvalidPinCredentials = errors.New("invalid email or pin")
+	ErrIncorrectPassword  = errors.New("current password is incorrect")
 )
 
 // AuthResponse is returned on successful registration or login.
@@ -33,6 +34,7 @@ type Service interface {
 	RemovePin(ctx context.Context, userID uuid.UUID) error
 	GetProfile(ctx context.Context, userID uuid.UUID) (*UserProfile, error)
 	UpdateSettings(ctx context.Context, userID uuid.UUID, cycleStartDay int) (*UserSettings, error)
+	ChangePassword(ctx context.Context, userID uuid.UUID, currentPassword, newPassword string) error
 }
 
 // DefaultService implements Service.
@@ -213,4 +215,24 @@ func (s *DefaultService) UpdateSettings(ctx context.Context, userID uuid.UUID, c
 	}
 	return s.repo.UpdateUserSettings(ctx, userID, cycleStartDay)
 }
+
+// ChangePassword verifies current password and updates to new password hash.
+func (s *DefaultService) ChangePassword(ctx context.Context, userID uuid.UUID, currentPassword, newPassword string) error {
+	user, err := s.repo.GetUserByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	if !CheckPasswordHash(currentPassword, user.PasswordHash) {
+		return ErrIncorrectPassword
+	}
+
+	newHash, err := HashPassword(newPassword)
+	if err != nil {
+		return err
+	}
+
+	return s.repo.UpdatePasswordHash(ctx, userID, newHash)
+}
+
 

@@ -105,4 +105,29 @@ describe('Auth API client', () => {
     const res = await authApi.updateUserSettings(28);
     expect(res.cycle_start_day).toBe(28);
   });
+
+  it('changePassword sends PUT request with current and new password', async () => {
+    authApi.setToken('my-auth-token');
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ success: true, message: 'password updated successfully' }),
+    });
+
+    await authApi.changePassword('OldPass123!', 'NewPass123!');
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/v1/auth/password'),
+      expect.objectContaining({
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer my-auth-token',
+        },
+        body: JSON.stringify({
+          current_password: 'OldPass123!',
+          new_password: 'NewPass123!',
+        }),
+      })
+    );
+  });
 });

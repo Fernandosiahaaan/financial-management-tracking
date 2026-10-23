@@ -171,3 +171,25 @@ export async function updateUserSettings(cycleStartDay: number): Promise<{ cycle
   return handleResponse<{ cycle_start_day: number }>(res);
 }
 
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  const token = getToken();
+  if (!token) {
+    throw new Error('No authentication token found');
+  }
+
+  const res = await fetch(`${API_BASE_URL}/api/v1/auth/password`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      current_password: currentPassword,
+      new_password: newPassword,
+    }),
+  });
+
+  await handleResponse<void>(res);
+}
+
+

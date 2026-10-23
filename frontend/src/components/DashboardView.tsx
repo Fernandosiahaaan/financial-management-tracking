@@ -60,31 +60,31 @@ const NAV_GROUPS: { group: string; items: NavItemConfig[] }[] = [
   {
     group: 'Ringkasan & Analisis',
     items: [
-      { id: 'overview', label: '📊 Dashboard', icon: LayoutDashboard, elementId: 'nav-tab-overview' },
-      { id: 'reports', label: '📑 Reports', icon: FileText, elementId: 'nav-tab-reports' },
+      { id: 'overview', label: 'Dashboard', icon: LayoutDashboard, elementId: 'nav-tab-overview' },
+      { id: 'reports', label: 'Reports', icon: FileText, elementId: 'nav-tab-reports' },
     ],
   },
   {
     group: 'Arus Kas & Anggaran',
     items: [
-      { id: 'transactions', label: '💸 Transactions', icon: ArrowLeftRight, elementId: 'nav-tab-transactions' },
-      { id: 'budgets', label: '📊 Budgets', icon: PieChart, elementId: 'nav-tab-budgets' },
-      { id: 'allocations', label: '🎯 Allocations', icon: Target, elementId: 'nav-tab-allocations' },
+      { id: 'transactions', label: 'Transactions', icon: ArrowLeftRight, elementId: 'nav-tab-transactions' },
+      { id: 'budgets', label: 'Budgets', icon: PieChart, elementId: 'nav-tab-budgets' },
+      { id: 'allocations', label: 'Allocations', icon: Target, elementId: 'nav-tab-allocations' },
     ],
   },
   {
     group: 'Aset & Portofolio',
     items: [
-      { id: 'receivables', label: '🤝 Receivables', icon: HandCoins, elementId: 'nav-tab-receivables' },
-      { id: 'investments', label: '📈 Investments', icon: TrendingUp, elementId: 'nav-tab-investments' },
-      { id: 'accounts', label: '🏛️ Accounts', icon: Landmark, elementId: 'nav-tab-accounts' },
-      { id: 'categories', label: '🏷️ Categories', icon: Tags, elementId: 'nav-tab-categories' },
+      { id: 'receivables', label: 'Receivables', icon: HandCoins, elementId: 'nav-tab-receivables' },
+      { id: 'investments', label: 'Investments', icon: TrendingUp, elementId: 'nav-tab-investments' },
+      { id: 'accounts', label: 'Accounts', icon: Landmark, elementId: 'nav-tab-accounts' },
+      { id: 'categories', label: 'Categories', icon: Tags, elementId: 'nav-tab-categories' },
     ],
   },
   {
     group: 'Sistem',
     items: [
-      { id: 'settings', label: '⚙️ Profile & Settings', icon: Settings, elementId: 'nav-tab-settings' },
+      { id: 'settings', label: 'Profile & Settings', icon: Settings, elementId: 'nav-tab-settings' },
     ],
   },
 ];

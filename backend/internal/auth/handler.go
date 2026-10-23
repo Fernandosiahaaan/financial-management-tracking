@@ -28,6 +28,11 @@ type SetPinRequest struct {
 	Pin string `json:"pin"`
 }
 
+type ChangePasswordRequest struct {
+	CurrentPassword string `json:"current_password"`
+	NewPassword     string `json:"new_password"`
+}
+
 type UpdateSettingsRequest struct {
 	CycleStartDay int `json:"cycle_start_day"`
 }
@@ -61,6 +66,7 @@ func (h *Handler) Routes() chi.Router {
 		pr.Use(RequireAuth(h.tokens))
 		pr.Get("/me", h.GetMe)
 		pr.Put("/settings", h.UpdateSettings)
+		pr.Put("/password", h.ChangePassword)
 		pr.Post("/pin", h.SetPin)
 		pr.Delete("/pin", h.RemovePin)
 	})
@@ -313,6 +319,67 @@ func (h *Handler) RemovePin(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, map[string]interface{}{
 		"success": true,
 		"message": "PIN berhasil dinonaktifkan",
+	})
+}
+
+func (h *Handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
+	userID, ok := GetUserID(r.Context())
+	if !ok {
+		respondUnauthorized(w, "unauthorized")
+		return
+	}
+
+	var req ChangePasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondJSON(w, http.StatusBadRequest, map[string]interface{}{
+			"success": false,
+			"message": "invalid request body",
+		})
+		return
+	}
+
+	if req.CurrentPassword == "" {
+		respondJSON(w, http.StatusBadRequest, map[string]interface{}{
+			"success": false,
+			"message": "current password is required",
+		})
+		return
+	}
+
+	err := h.service.ChangePassword(r.Context(), userID, req.CurrentPassword, req.NewPassword)
+	if err != nil {
+		if errors.Is(err, ErrIncorrectPassword) {
+			respondJSON(w, http.StatusUnauthorized, map[string]interface{}{
+				"success": false,
+				"message": err.Error(),
+			})
+			return
+		}
+		if errors.Is(err, ErrPasswordTooShort) || errors.Is(err, ErrPasswordTooLong) {
+			respondJSON(w, http.StatusBadRequest, map[string]interface{}{
+				"success": false,
+				"message": err.Error(),
+			})
+			return
+		}
+		if errors.Is(err, ErrUserNotFound) {
+			respondJSON(w, http.StatusNotFound, map[string]interface{}{
+				"success": false,
+				"message": err.Error(),
+			})
+			return
+		}
+
+		respondJSON(w, http.StatusInternalServerError, map[string]interface{}{
+			"success": false,
+			"message": "internal server error",
+		})
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"message": "password updated successfully",
 	})
 }
 

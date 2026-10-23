@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { PinSettingsCard } from './PinSettingsCard';
+import { ChangePasswordCard } from './ChangePasswordCard';
 import { fetchHealth, type HealthResponse } from '../api/client';
 
 export const UserSettingsCard: React.FC = () => {
@@ -105,7 +106,10 @@ export const UserSettingsCard: React.FC = () => {
       {/* 2. PIN Security Settings Card */}
       <PinSettingsCard />
 
-      {/* 3. Financial Cycle Settings Card */}
+      {/* 3. Change Password Card */}
+      <ChangePasswordCard />
+
+      {/* 4. Financial Cycle Settings Card */}
       <div className="settings-card" id="user-settings-card" style={{ marginTop: 'var(--space-4)' }}>
         <div className="settings-card__header">
           <h3 className="settings-card__title">⚙️ Financial Cycle Settings</h3>

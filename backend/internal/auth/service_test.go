@@ -113,6 +113,17 @@ func (m *mockRepo) SetPinHash(ctx context.Context, userID uuid.UUID, pinHash *st
 	return nil
 }
 
+func (m *mockRepo) UpdatePasswordHash(ctx context.Context, userID uuid.UUID, passwordHash string) error {
+	u, ok := m.usersByID[userID]
+	if !ok {
+		return ErrUserNotFound
+	}
+	u.PasswordHash = passwordHash
+	m.usersByID[userID] = u
+	m.users[u.Email] = u
+	return nil
+}
+
 func setupTestService() (*DefaultService, *mockRepo) {
 	repo := newMockRepo()
 	tokens := NewJWTService("test-secret-key-1234567890123456", 1*time.Hour)
@@ -303,6 +314,53 @@ func TestService_PinAuth(t *testing.T) {
 	_, err = svc.PinLogin(context.Background(), "pinuser@example.com", "123456")
 	if !errors.Is(err, ErrPinNotConfigured) {
 		t.Fatalf("expected ErrPinNotConfigured after removal, got %v", err)
+	}
+}
+
+func TestService_ChangePassword(t *testing.T) {
+	svc, _ := setupTestService()
+	reg, err := svc.Register(context.Background(), "changepw@example.com", "OldPassword123!", 1)
+	if err != nil {
+		t.Fatalf("failed to register user: %v", err)
+	}
+
+	// 1. Wrong current password should fail
+	err = svc.ChangePassword(context.Background(), reg.Profile.ID, "WrongPassword!", "NewPassword123!")
+	if !errors.Is(err, ErrIncorrectPassword) {
+		t.Fatalf("expected ErrIncorrectPassword, got %v", err)
+	}
+
+	// 2. New password too short should fail
+	err = svc.ChangePassword(context.Background(), reg.Profile.ID, "OldPassword123!", "short")
+	if !errors.Is(err, ErrPasswordTooShort) {
+		t.Fatalf("expected ErrPasswordTooShort, got %v", err)
+	}
+
+	// 3. User not found should fail
+	err = svc.ChangePassword(context.Background(), uuid.New(), "OldPassword123!", "NewPassword123!")
+	if !errors.Is(err, ErrUserNotFound) {
+		t.Fatalf("expected ErrUserNotFound, got %v", err)
+	}
+
+	// 4. Correct change password succeeds
+	err = svc.ChangePassword(context.Background(), reg.Profile.ID, "OldPassword123!", "NewPassword123!")
+	if err != nil {
+		t.Fatalf("expected successful change password, got %v", err)
+	}
+
+	// 5. Old password cannot login anymore
+	_, err = svc.Login(context.Background(), "changepw@example.com", "OldPassword123!")
+	if !errors.Is(err, ErrInvalidCredentials) {
+		t.Fatalf("expected ErrInvalidCredentials for old password, got %v", err)
+	}
+
+	// 6. New password can login successfully
+	res, err := svc.Login(context.Background(), "changepw@example.com", "NewPassword123!")
+	if err != nil {
+		t.Fatalf("expected successful login with new password, got %v", err)
+	}
+	if res.Token == "" {
+		t.Fatalf("expected non-empty token")
 	}
 }
 

@@ -36,4 +36,6 @@ backups/
 /docs/template.md
 /docs/project_state.md
 
+.agents/
+
 
